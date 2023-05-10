@@ -3,21 +3,43 @@ from typing import List, Union
 from . import Game
 
 class EventSurface(pygame.Surface):
-    mouse_triggered = False
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.subscription = Game.event_bus.subscribe(self.mouse_event)
-        self.items: List[EventSurface] = []
     
-    def mouse_event(self, event: int):
-        raise NotImplementedError("Mouse Event")
+    def mouse_event(self, event: pygame.event.Event) -> bool:
+        return False
     
-    def add_item(self, item: "EventSurface"):
-        self.items.append(item)
-    
-    def dispose(self):
-        self.subscription.dispose()
-        for item in self.items:
-            item.dispose()
+    def keyboard_event(self, event: pygame.event.Event) -> bool:
+        return False
 
+
+class PageSurface(EventSurface):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.children: List[ElementSurface] = []
+    
+    @property
+    def visible_children(self):
+        return [x for x in self.children if x.visible]
+    
+    @property
+    def children_stack(self):
+        return reversed(self.visible_children)
+        
+    def mouse_event(self, event: pygame.event.Event) -> bool:
+        for child in self.children_stack:
+            if child.mouse_event(event):
+                return True
+        return False
+    
+    def keyboard_event(self, event: pygame.event.Event) -> bool:
+        return False
+    
+    def back(self):
+        pass
+
+
+class ElementSurface(EventSurface):
+    def __init__(self, visible = True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.visible = visible

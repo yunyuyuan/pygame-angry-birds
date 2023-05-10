@@ -1,35 +1,34 @@
 import pygame
 from typing import Tuple
 
-from ..surface import EventSurface
+from src.utils.enums import ButtonImgMap
+
+from ..surface import ElementSurface
 from .img import clip_img
 from .. import Game
 
-ImgMap = {
-    "setting": ((10, 10), (10, 10))
-}
-
-class Button(EventSurface):
+class Button(ElementSurface):
     def __init__(
         self, 
-        parent: pygame.Surface,
         size: Tuple[float, float],
         pos: Tuple[float, float],
-        img: str,
+        img: ButtonImgMap,
         max_scale = 1.3
     ):
-        super().__init__(size)
+        super().__init__()
         self.size = size
         self.pos = pos
-        self.parent = parent
         self.scale = 1
-        self.img = clip_img("images/BUTTONS_SHEET_1.png", *ImgMap[img])
+        self.img = clip_img("images/BUTTONS_SHEET_1.png", *img.value)
         
-    def mouse_event(self, event: int):
-        if event == pygame.MOUSEMOTION:
+    def mouse_event(self, event: pygame.event.Event) -> bool:
+        if event.type == pygame.MOUSEMOTION:
             pass
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            pass
+        return False
         
     def draw(self):
         real_size = self.size
         real_pos = self.pos
-        self.parent.blit(self.img, pygame.Rect(real_pos, real_size))
+        Game.screen.blit(self.img, pygame.Rect(real_pos, real_size))
