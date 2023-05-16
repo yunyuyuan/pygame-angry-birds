@@ -14,12 +14,8 @@ class Game(object):
     running = True
 
     screen: pygame.Surface
-    active_page: PageSurface
+    active_page: "PageSurface"
 
-    space: pymunk.Space
-
-    launched_birds: List[GameBirdObject] = []
-    obstacles: List[GameObstacleObject] = []
     
     @staticmethod
     def pygame_event():

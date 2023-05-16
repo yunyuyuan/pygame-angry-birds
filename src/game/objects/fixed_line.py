@@ -22,4 +22,3 @@ class FixedLineObject(GameObject):
         p1 = round(pv1.x), Game.screen.get_height() - round(pv1.y)
         p2 = round(pv2.x), Game.screen.get_height() - round(pv2.y)
         pygame.draw.lines(Game.screen, pygame.Color("black"), False, [p1, p2], 2)
-        return super().draw()

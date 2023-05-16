@@ -26,4 +26,3 @@ class FixedPolyObject(GameObject):
         ps = [(round(p.x), round(Game.screen.get_height() - p.y)) for p in ps]
         ps += [ps[0]]
         pygame.draw.lines(Game.screen, pygame.Color("red"), False, ps, 1)
-        return super().draw()

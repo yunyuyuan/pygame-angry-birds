@@ -1,6 +1,8 @@
 import pygame
 import pymunk
 
+from src.surface import Drawable
+
 __all__ = [
     "FixedLineObject",
     "FixedPolyObject",
@@ -8,20 +10,20 @@ __all__ = [
     "OrangeBirdObject"
 ]
 
-# pymunk & pygame
-# 游戏对象，用于创建一个物理引擎内的物体
-# 此外，可以通过一个draw()方法画到pygame上
-class GameObject():
+class GameObject(Drawable):
+    '''
+    pymunk & pygame
+    游戏对象，用于创建一个物理引擎内的物体
+    '''
     def __init__(self):
         self.body: pymunk.Body
         self.shape = pymunk.Shape
-    
-    # 把object画到pygame frame
-    def draw(self):
-        pass
 
-# 带碰撞的GameObject
+
 class GameCollisionObject(GameObject):
+    '''
+    带碰撞的GameObject
+    '''
     def __init__(self):
         self._collision_status: int
         self.image: pygame.Surface
