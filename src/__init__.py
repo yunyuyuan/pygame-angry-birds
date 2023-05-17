@@ -13,9 +13,9 @@ fps = 60.0
 class Game(object):
     running = True
 
+    geometry = (1280, 720)
     screen: pygame.Surface
     active_page: "PageSurface"
-
     
     @staticmethod
     def pygame_event():

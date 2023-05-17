@@ -3,7 +3,7 @@ from enum import Enum
 class ButtonImgMap(Enum):
     setting = ((10, 10), (10, 10))
     pause = ((254, 739), (99, 108))
-    resume = ((10, 10), (10, 10))
+    resume = ((254, 852), (99, 108))
     reset = ((254, 852), (99, 108))
 
 

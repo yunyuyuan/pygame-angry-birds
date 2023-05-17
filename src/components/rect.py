@@ -10,8 +10,9 @@ class RectSurface(ElementSurface):
         size: Tuple[float, float],
         pos: Tuple[float, float],
         color: pygame.Color,
+        *args, **kwargs
     ):
-        super().__init__()
+        super().__init__(size=size, *args, **kwargs)
         self.size = size
         self.pos = pos
         self.color = color
@@ -26,4 +27,4 @@ class RectSurface(ElementSurface):
     def draw(self):
         real_size = self.size
         real_pos = self.pos
-        pygame.draw.rect(Game.screen, self.color, (self.pos, self.size))
+        pygame.draw.rect(self.parent.surface, self.color, (self.pos, self.size))
