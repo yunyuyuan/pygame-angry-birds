@@ -31,15 +31,16 @@ class GamePage(PageSurface):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.pause_btn = Button(size=(100, 50), pos=(50, 50), img=ButtonImgMap.pause, parent=self)
-        self.reset_btn = Button(size=(100, 50), pos=(300, 50), img=ButtonImgMap.reset, parent=self)
+        self.pause_btn = Button(pos=(50, 50), img=ButtonImgMap.pause, parent=self)
+        self.reset_btn = Button(pos=(150, 50), img=ButtonImgMap.reset, parent=self)
 
-        self.left_board = ContainerSurface(size=(300, 600), pos=(500, 20), visible=True, parent=self)
+        # 侧边栏
+        self.left_board = ContainerSurface(size=(300, 600), pos=(50, 20), visible=False, parent=self)
         self.left_board_bg = RectSurface(size=(250, 600), pos=(0, 0), color=pygame.Color(255, 255, 255), parent=self.left_board)
-        self.resume_btn = Button(size=(100, 50), pos=(50, 50), img=ButtonImgMap.resume, parent=self.left_board)
-        self.left_board.children.extend([self.resume_btn, self.left_board_bg])
+        self.resume_btn = Button(pos=(50, 50), img=ButtonImgMap.resume, parent=self.left_board)
+        self.left_board.children.extend([self.left_board_bg, self.resume_btn])
         
-        self.children.extend([self.left_board, self.pause_btn, self.reset_btn])
+        self.children.extend([self.pause_btn, self.reset_btn, self.left_board])
     
     def draw(self):
         self.surface.fill("#13b3b9")

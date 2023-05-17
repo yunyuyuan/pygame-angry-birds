@@ -12,6 +12,7 @@ fps = 60.0
 # 单例静态class
 class Game(object):
     running = True
+    debug = True
 
     geometry = (1280, 720)
     screen: pygame.Surface
