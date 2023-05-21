@@ -1,5 +1,7 @@
 import pygame
 from typing import List, Union, Tuple
+
+from src.utils.smart_arr import arr_sub
 from . import Game
 
 class Drawable():
@@ -9,6 +11,13 @@ class Drawable():
         '''
         pass
 
+class Animatable():
+    def animation_event(self):
+        if isinstance(self, Animation):
+            self.animate()
+'''
+----------------------------------------------------------------------
+'''
 class EventSurface(Drawable):
     '''
     带有鼠标和键盘事件的Drawable
@@ -16,8 +25,8 @@ class EventSurface(Drawable):
     def __init__(self, size: Tuple[float, float], pos: Tuple[float, float], parent: Union[None, "ContainerSurface"] = None, visible = True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.surface = pygame.Surface(size=size)
-        self.size = size
-        self.pos = pos
+        self.size = list(size)
+        self.pos = list(pos)
         self.visible = visible
         self.parent = parent
     
@@ -33,8 +42,8 @@ class EventSurface(Drawable):
     def keyboard_event(self, event: pygame.event.Event) -> bool:
         ''' 返回True则说明被拦截，不再继续往下处理 '''
         return False
-    
-class ContainerSurface(EventSurface):
+
+class ContainerSurface(EventSurface, Animatable):
     '''
     * Container没有实体
     * Container拦截鼠标和键盘事件, 依次传给child处理
@@ -46,7 +55,7 @@ class ContainerSurface(EventSurface):
         *args, **kwargs
     ):
         super().__init__(size=size if size else Game.geometry, pos=pos, *args, **kwargs)
-        self.children: List[EventSurface] = []
+        self.children: List[Union["ContainerSurface", ElementSurface]] = []
     
     @property
     def visible_children(self):
@@ -61,7 +70,7 @@ class ContainerSurface(EventSurface):
         # 鼠标在container内部, 拦截
         if self.is_mouse_inside(event=event):
             # 修改为相对坐标
-            event.pos = (event.pos[0]-self.pos[0], event.pos[1]-self.pos[1])
+            event.pos = arr_sub(event.pos, self.pos)
             for child in self.children_stack:
                 if child.mouse_event(event):
                     break
@@ -75,6 +84,11 @@ class ContainerSurface(EventSurface):
                 break
         return True
     
+    def animation_event(self):
+        super().animation_event()
+        for child in self.children_stack:
+            child.animation_event()
+    
     def draw(self):
         ''' 按顺序画出每一个子组件 '''
         for child in self.visible_children:
@@ -82,6 +96,28 @@ class ContainerSurface(EventSurface):
         parent_surface = self.parent.surface if self.parent else Game.screen
         parent_surface.blit(self.surface, self.pos)
         return super().draw()
+
+
+class Animation():
+    '''
+    特性：
+    * 不可中断
+    '''
+    def __init__(self, speed = 150, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.animation_state = -1
+        # 0.01~1.00
+        self.animation_progress: float = 0
+        self.animation_speed = Game.fps_frame_sec/speed
+    
+    def animation_step(self, progress: float):
+        raise NotImplementedError("you must define the animation step!")
+    
+    def animate(self):
+        new_progress = self.animation_progress + self.animation_speed*self.animation_state
+        if 0 <= new_progress < 1:
+            self.animation_progress = new_progress
+            self.animation_step(self.animation_progress)
 
 class PageSurface(ContainerSurface):
     '''
@@ -96,24 +132,8 @@ class PageSurface(ContainerSurface):
     def back(self):
         pass
 
-class AnimationSurface():
-    '''
-    * 有两种状态
-    * 逐帧判断，并改变
-    '''
-    def __init__(self, speed = 1, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # 0~100步
-        self.progress = 0
-        self.speed = speed
-    
-    def next_step(self, status: int):
-        pass
-    
-    def animation_step(self):
-        pass
 
-class ElementSurface(EventSurface):
+class ElementSurface(EventSurface, Animatable):
     '''
     基本组件
     '''

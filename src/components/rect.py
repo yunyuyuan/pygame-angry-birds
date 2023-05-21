@@ -19,7 +19,7 @@ class RectSurface(ElementSurface):
         is_inside = self.is_mouse_inside(event)
         if event.type == pygame.MOUSEMOTION:
             if is_inside:
-                print('rect')
+                pass
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pass
         return False

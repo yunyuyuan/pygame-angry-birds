@@ -4,13 +4,13 @@ from .game import GamePage
 from . import Game
 
 
-fps = 60.0
-
 def start_game():
     # pygame setup
     pygame.init()
     Game.screen = pygame.display.set_mode(Game.geometry)
     clock = pygame.time.Clock()
+
+    pygame.time.set_timer(Game.fps_event, Game.fps_frame_sec)
     Game.active_page = GamePage()
 
     while Game.running:
@@ -21,6 +21,6 @@ def start_game():
 
         # flip() the display to put your work on screen
         pygame.display.flip()
-        clock.tick(fps)
+        clock.tick(Game.fps)
 
     pygame.quit()
