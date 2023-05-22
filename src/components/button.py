@@ -2,6 +2,7 @@ import pygame
 from typing import Tuple, Callable, Any
 
 from src.utils.enums import ButtonImgMap
+from src.utils.smart_arr import arr_divide, arr_multi, arr_plus, arr_sub
 
 from ..surface import ElementSurface, Animation
 from ..utils.img import clip_img
@@ -13,13 +14,18 @@ class Button(Animation, ElementSurface):
         pos: Tuple[float, float],
         img: ButtonImgMap,
         on_click: Callable[[pygame.event.Event], Any] = lambda _: None,
-        max_scale = 1.1,
+        init_scale = 1.0,
+        max_scale = 0.2,
         *args, **kwargs
     ):
-        super().__init__(size=img.value[1], pos=pos, *args, **kwargs)
-        self.scale = 1
-        self.max_scale = max_scale - 1
-        self.img_type = img
+        self.origin_size = arr_multi(img.value[1], init_scale)
+        max_size = arr_multi(img.value[1], init_scale+max_scale)
+        half_sub_size = arr_divide(arr_sub(max_size, self.origin_size), 2)
+        super().__init__(size=max_size, pos=arr_sub(pos, half_sub_size), *args, **kwargs)
+        self.center_pos = arr_plus(self.pos, arr_divide(self.size, 2))
+        self.init_scale = init_scale
+        self.max_scale = max_scale
+        self.scale = init_scale
         self.on_click = on_click
         self.img = clip_img("images/BUTTONS_SHEET_1.png", *img.value)
         
@@ -38,12 +44,12 @@ class Button(Animation, ElementSurface):
         return False
     
     def animation_step(self, progress):
-        self.scale = 1 + progress * self.max_scale
+        self.scale = self.init_scale + progress * self.max_scale
     
     def draw(self):
-        real_width = self.size[0] * self.scale
-        real_height = self.size[1] * self.scale
-        target_rect = pygame.Rect((self.pos[0]-(real_width-self.size[0])/2, self.pos[1]-(real_height-self.size[1])/2), (real_width, real_height))
+        new_size = arr_multi(self.origin_size, self.scale)
+        target_rect = pygame.Rect(arr_sub(self.center_pos, arr_divide(new_size, 2)), new_size)
         self.parent.surface.blit(pygame.transform.scale(self.img, target_rect.size), target_rect)
         if Game.debug:
             pygame.draw.rect(self.parent.surface, pygame.Color(255, 0, 0), target_rect, width=1)
+            pygame.draw.rect(self.parent.surface, pygame.Color(255, 0, 0), (self.pos, self.surface.get_size()), width=1)

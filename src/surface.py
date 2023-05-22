@@ -22,9 +22,9 @@ class EventSurface(Drawable):
     '''
     带有鼠标和键盘事件的Drawable
     '''
-    def __init__(self, size: Tuple[float, float], pos: Tuple[float, float], parent: Union[None, "ContainerSurface"] = None, visible = True, *args, **kwargs):
+    def __init__(self, size: Tuple[float, float], pos: Tuple[float, float], parent: Union[None, "ContainerSurface"] = None, visible = True, flags=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.surface = pygame.Surface(size=size)
+        self.surface = pygame.Surface(size=size, flags=flags)
         self.size = list(size)
         self.pos = list(pos)
         self.visible = visible
@@ -43,6 +43,8 @@ class EventSurface(Drawable):
         ''' 返回True则说明被拦截，不再继续往下处理 '''
         return False
 
+
+ChildrenType = List[Union["ContainerSurface", "ElementSurface"]]
 class ContainerSurface(EventSurface, Animatable):
     '''
     * Container没有实体
@@ -54,8 +56,8 @@ class ContainerSurface(EventSurface, Animatable):
         pos: Tuple[float, float] = (0, 0),
         *args, **kwargs
     ):
-        super().__init__(size=size if size else Game.geometry, pos=pos, *args, **kwargs)
-        self.children: List[Union["ContainerSurface", ElementSurface]] = []
+        super().__init__(size=size if size else Game.geometry, pos=pos, flags=pygame.SRCALPHA, *args, **kwargs)
+        self.children: ChildrenType = []
     
     @property
     def visible_children(self):
@@ -65,6 +67,11 @@ class ContainerSurface(EventSurface, Animatable):
     def children_stack(self):
         ''' 所有的子组件，事件将从右往左依次处理 '''
         return reversed(self.visible_children)
+    
+    def add_children(self, children: ChildrenType):
+        for child in children:
+            child.parent = self
+        self.children.extend(children)
         
     def mouse_event(self, event: pygame.event.Event) -> bool:
         # 鼠标在container内部, 拦截
