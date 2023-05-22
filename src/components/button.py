@@ -2,7 +2,7 @@ import pygame
 from typing import Tuple, Callable, Any
 
 from src.utils.enums import ButtonImgMap
-from src.utils.smart_arr import arr_divide, arr_multi, arr_plus, arr_sub
+from src.utils.vector import Vector
 
 from ..surface import ElementSurface, Animation
 from ..utils.img import clip_img
@@ -18,11 +18,10 @@ class Button(Animation, ElementSurface):
         max_scale = 0.2,
         *args, **kwargs
     ):
-        self.origin_size = arr_multi(img.value[1], init_scale)
-        max_size = arr_multi(img.value[1], init_scale+max_scale)
-        half_sub_size = arr_divide(arr_sub(max_size, self.origin_size), 2)
-        super().__init__(size=max_size, pos=arr_sub(pos, half_sub_size), *args, **kwargs)
-        self.center_pos = arr_plus(self.pos, arr_divide(self.size, 2))
+        self.img_size = Vector(img.value[1])
+        max_size = self.img_size * (init_scale+max_scale)
+        super().__init__(size=max_size, pos=pos, *args, **kwargs)
+        self.center_pos = self.pos + self.size / 2
         self.init_scale = init_scale
         self.max_scale = max_scale
         self.scale = init_scale
@@ -47,8 +46,8 @@ class Button(Animation, ElementSurface):
         self.scale = self.init_scale + progress * self.max_scale
     
     def draw(self):
-        new_size = arr_multi(self.origin_size, self.scale)
-        target_rect = pygame.Rect(arr_sub(self.center_pos, arr_divide(new_size, 2)), new_size)
+        new_size = self.img_size * self.scale
+        target_rect = pygame.Rect(self.center_pos - new_size / 2, new_size)
         self.parent.surface.blit(pygame.transform.scale(self.img, target_rect.size), target_rect)
         if Game.debug:
             pygame.draw.rect(self.parent.surface, pygame.Color(255, 0, 0), target_rect, width=1)

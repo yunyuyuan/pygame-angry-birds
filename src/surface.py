@@ -1,7 +1,7 @@
 import pygame
 from typing import List, Union, Tuple
 
-from src.utils.smart_arr import arr_sub
+from src.utils.vector import Vector
 from . import Game
 
 class Drawable():
@@ -22,14 +22,36 @@ class EventSurface(Drawable):
     '''
     带有鼠标和键盘事件的Drawable
     '''
-    def __init__(self, size: Tuple[float, float], pos: Tuple[float, float], parent: Union[None, "ContainerSurface"] = None, visible = True, flags=0, *args, **kwargs):
+    def __init__(
+            self, 
+            size: Tuple[float, float], 
+            pos: Tuple[float, float], 
+            parent: Union[None, "ContainerSurface"] = None, 
+            visible = True, 
+            flags = 0,
+            pos_bottom = False,
+            pos_right = False,
+            *args, **kwargs
+        ):
         super().__init__(*args, **kwargs)
-        self.surface = pygame.Surface(size=size, flags=flags)
-        self.size = list(size)
-        self.pos = list(pos)
+        self.size = Vector((size[0] if size[0] > 0 else Game.geometry[0]+size[0], size[1] if size[1] > 0 else Game.geometry[1]+size[1]))
+        self.surface = pygame.Surface(size=self.size, flags=flags)
+        self._pos = pos
+        self.pos_bottom = pos_bottom
+        self.pos_right = pos_right
         self.visible = visible
         self.parent = parent
-    
+
+    @property
+    def pos(self) -> Vector:
+        return Vector((
+            self._pos[0] if not self.pos_right else Game.geometry[0]-self._pos[0]-self.size[0],
+            self._pos[1] if not self.pos_bottom else Game.geometry[1]-self._pos[1]-self.size[1],
+        ))
+            
+    @pos.setter
+    def pos(self, pos):
+        self._pos = pos
 
     def is_mouse_inside(self, event: pygame.event.Event) -> bool:
         return 0 <= event.pos[0]-self.pos[0] <= self.size[0] and \
@@ -77,7 +99,7 @@ class ContainerSurface(EventSurface, Animatable):
         # 鼠标在container内部, 拦截
         if self.is_mouse_inside(event=event):
             # 修改为相对坐标
-            event.pos = arr_sub(event.pos, self.pos)
+            event.pos = Vector(event.pos) - self.pos
             for child in self.children_stack:
                 if child.mouse_event(event):
                     break
@@ -121,10 +143,15 @@ class Animation():
         raise NotImplementedError("you must define the animation step!")
     
     def animate(self):
+        if (self.animation_progress == 0 and self.animation_state == -1) or (self.animation_progress == 1 and self.animation_state == 1):
+            return
         new_progress = self.animation_progress + self.animation_speed*self.animation_state
-        if 0 <= new_progress < 1:
-            self.animation_progress = new_progress
-            self.animation_step(self.animation_progress)
+        if new_progress < 0:
+            new_progress = 0
+        elif new_progress > 1:
+            new_progress = 1
+        self.animation_progress = new_progress
+        self.animation_step(self.animation_progress)
 
 class PageSurface(ContainerSurface):
     '''

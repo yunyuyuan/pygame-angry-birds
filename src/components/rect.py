@@ -2,7 +2,6 @@ import pygame
 from typing import Tuple
 
 from ..surface import ElementSurface
-from .. import Game
 
 class RectSurface(ElementSurface):
     def __init__(

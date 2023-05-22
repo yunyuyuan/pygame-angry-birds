@@ -1,10 +1,3 @@
-from typing import List, TYPE_CHECKING
-
-from src import Game
-from src.components.side_panel import SidePanel
-if TYPE_CHECKING:
-    from src.game.objects import GameBirdObject, GameObstacleObject
-
 import pygame
 import pymunk
 
@@ -23,8 +16,8 @@ class EditorPage(PageSurface):
         self.rotate_btn = Button(pos=(450, 50), img=ButtonImgMap.reset, init_scale=1)
         
         # staffs
-        self.staffs_panel = ContainerSurface(size=(400, 500), pos=(25, 200), visible=False)
-        self.staffs_bg = RectSurface(size=(400, 500), pos=(0, 0), color=pygame.Color(0, 0, 0, 100))
+        self.staffs_panel = ContainerSurface(size=(400, -200), pos=(50, 100), visible=False)
+        self.staffs_bg = RectSurface(size=(0, 0), pos=(0, 0), color=pygame.Color(0, 0, 0, 100))
 
         self.staffs_panel.add_children([self.staffs_bg])
         
