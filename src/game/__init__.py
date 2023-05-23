@@ -2,6 +2,7 @@ from typing import List, TYPE_CHECKING
 
 from src import Game
 from src.components.side_panel import SidePanel
+from ..utils.surface import ContainerSurface
 if TYPE_CHECKING:
     from src.game.objects import GameBirdObject, GameObstacleObject
 
@@ -11,7 +12,7 @@ import pymunk
 from src.components.button import Button
 from src.components.rect import RectSurface
 from src.utils.enums import ButtonImgMap
-from ..surface import PageSurface, ContainerSurface
+from ..utils.surface import PageSurface
 
 # 加载游戏level的json配置
 def load_json_config():

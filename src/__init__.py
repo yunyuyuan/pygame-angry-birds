@@ -4,14 +4,14 @@ import pygame
 from typing import List, TYPE_CHECKING
 if TYPE_CHECKING:
     from src.game.objects import GameBirdObject, GameObstacleObject
-    from src.surface import PageSurface
+    from src.utils.surface import PageSurface
 
 fps = 60.0
 
 # 单例静态class
 class Game(object):
     running = True
-    debug = True
+    debug = False
     fps = fps
     fps_frame_sec = int(1000/fps)
 

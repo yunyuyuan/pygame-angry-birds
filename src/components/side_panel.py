@@ -1,7 +1,8 @@
 
 import pygame
 from src import Game
-from src.surface import Animation, ContainerSurface
+from src.utils.surface import ContainerSurface
+from src.utils.animation import Animation
 
 
 class SidePanel(Animation, ContainerSurface):

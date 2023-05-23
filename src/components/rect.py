@@ -1,7 +1,7 @@
 import pygame
 from typing import Tuple
 
-from ..surface import ElementSurface
+from ..utils.surface import ElementSurface
 
 class RectSurface(ElementSurface):
     def __init__(
@@ -24,6 +24,4 @@ class RectSurface(ElementSurface):
         return False
         
     def draw(self):
-        real_size = self.size
-        real_pos = self.pos
-        pygame.draw.rect(self.parent.surface, self.color, (self.pos, self.size))
+        pygame.draw.rect(self.parent_surface, self.color, (self.pos, self.size), border_radius=10)

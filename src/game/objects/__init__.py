@@ -1,7 +1,7 @@
 import pygame
 import pymunk
 
-from src.surface import Drawable
+from src.utils.surface import Drawable
 
 __all__ = [
     "FixedLineObject",
