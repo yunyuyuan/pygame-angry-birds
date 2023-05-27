@@ -1,6 +1,6 @@
 # load clipped image resources from png file
 
-from ..utils.enums import BirdTypes, ObstacleRectTypes
+from ..utils.enums import BirdTypes, ObstacleTypes
 from . import get_asset_path
 from typing import Tuple
 import pygame
@@ -19,9 +19,9 @@ def load_bird(bird_type: int, status: int):
     return bird_img
 
 
-def load_obstacle_rect(rect_type: int, status: int):
+def load_obstacle(rect_type: int, status: int):
     rect_img = pygame.image.load(get_asset_path("images/INGAME_BLOCKS_1.png"))
-    if rect_type == ObstacleRectTypes.w4_h1:
+    if rect_type == ObstacleTypes.w4_h1:
         if status == 0:
             return rect_img.subsurface(pygame.Rect(309, 1017, 85, 22))
         elif status == 1:

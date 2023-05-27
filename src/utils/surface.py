@@ -122,11 +122,10 @@ class ContainerSurface(EventSurface, Animatable):
         return False
 
     def keyboard_event(self, event: pygame.event.Event) -> bool:
-        # 键盘事件永远被第一个拦截
         for child in self.children_stack:
             if child.keyboard_event(event):
-                break
-        return True
+                return True
+        return False
 
     def animation_event(self):
         super().animation_event()

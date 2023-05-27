@@ -1,4 +1,9 @@
 from enum import Enum
+from typing import Generator, Tuple
+
+import pygame
+
+from src.utils import get_asset_path
 
 class ButtonImgMap(Enum):
     setting = ((10, 10), (10, 10))
@@ -25,6 +30,17 @@ class BirdTypes(Enum):
     blue = 3,
 
 
-class ObstacleRectTypes(Enum):
-    w4_h1 = 1
+class MaterialType(Enum):
+    glass = ()
+    wood = ()
+    stone = ()
+
+def _load_obstacle(i: str, *pos: Tuple[int, int, int, int]):
+    img = pygame.image.load(get_asset_path(f"images/INGAME_BLOCKS_{i}.png"))
+    for p in pos:
+        yield img.subsurface(pygame.Rect(p))
+
+class ObstacleTypes(Enum):
+    # (status0, status1, status2, status3, img, material)
+    g_w4_h1 = (*_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22)), MaterialType.glass)
 
