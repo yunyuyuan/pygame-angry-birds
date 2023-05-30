@@ -13,8 +13,6 @@ class ButtonImgMap(Enum):
 
     # my buttons
     my_materials = ((38,26), (148, 166))
-    my_move = ((206,26), (148, 166))
-    my_rotate = ((375,26), (148, 166))
     my_preview = ((543,26), (148, 166))
 
 

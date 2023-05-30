@@ -30,5 +30,5 @@ class Game(object):
                 Game.active_page.animation_event()
             elif event.type == pygame.KEYDOWN:
                 Game.active_page.keyboard_event(event)
-            elif event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEMOTION:
+            elif event.type == pygame.MOUSEBUTTONUP or event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEMOTION:
                 Game.active_page.mouse_event(event)
