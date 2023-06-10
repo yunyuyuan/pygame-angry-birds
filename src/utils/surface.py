@@ -4,7 +4,7 @@ from src.utils.vector import Vector
 
 import pygame
 
-from typing import List, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 
 class Drawable():
@@ -25,7 +25,7 @@ class EventSurface(Drawable):
             pos: Tuple[float, float],
             parent: Union[pygame.Surface, "EventSurface", None] = None,
             visible = True,
-            flags = 0,
+            flags = pygame.SRCALPHA,
             pos_bottom = False,
             pos_right = False,
             *args, **kwargs
@@ -79,6 +79,10 @@ class EventSurface(Drawable):
         ''' 返回True则说明被拦截，不再继续往下处理 '''
         return False
 
+    def draw(self):
+        self.parent_surface.blit(self.surface, self.pos)
+        if Game.debug:
+            pygame.draw.rect(self.parent_surface, (50, 50, 50), (self.pos, self.surface.get_size()), width=1)
 
 
 ChildrenType = List[Union["ContainerSurface", "ElementSurface"]]
@@ -93,7 +97,7 @@ class ContainerSurface(EventSurface, Animatable):
         pos: Tuple[float, float] = (0, 0),
         *args, **kwargs
     ):
-        super().__init__(size=size if size else Game.geometry, pos=pos, flags=pygame.SRCALPHA, *args, **kwargs)
+        super().__init__(size=size if size else Game.geometry, pos=pos, *args, **kwargs)
         self.children: ChildrenType = []
 
     @property
@@ -132,11 +136,12 @@ class ContainerSurface(EventSurface, Animatable):
         for child in self.children_stack:
             child.animation_event()
 
-    def draw(self):
+    def draw(self, afterChildrenDraw: Optional[Callable]=None):
         ''' 按顺序画出每一个子组件 '''
         for child in self.visible_children:
             child.draw()
-        self.parent_surface.blit(self.surface, self.pos)
+        if afterChildrenDraw:
+            afterChildrenDraw()
         return super().draw()
 
 

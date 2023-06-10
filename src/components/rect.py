@@ -11,7 +11,7 @@ class RectSurface(ElementSurface):
         color: pygame.Color,
         *args, **kwargs
     ):
-        super().__init__(size=size, pos=pos, flags=pygame.SRCALPHA, *args, **kwargs)
+        super().__init__(size=size, pos=pos, *args, **kwargs)
         self.color = color
         
     def mouse_event(self, event: pygame.event.Event) -> bool:
@@ -24,4 +24,6 @@ class RectSurface(ElementSurface):
         return False
         
     def draw(self):
-        pygame.draw.rect(self.parent_surface, self.color, (self.pos, self.size), border_radius=10)
+        self.surface.fill((0, 0, 0, 0))
+        pygame.draw.rect(self.surface, self.color, (self.pos, self.size), border_radius=10)
+        super().draw()

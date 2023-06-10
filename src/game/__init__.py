@@ -129,7 +129,7 @@ class GamePanel(ContainerSurface):
     编辑/游戏界面通用
     '''
     def __init__(self, end_place: Callable, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(size=(2400, 720), *args, **kwargs)
         '''
         gaming
         '''
@@ -145,11 +145,22 @@ class GamePanel(ContainerSurface):
         '''
         common
         '''
+        self.bg = RectSurface(size=(0, -100), pos=(0, 0), color=pygame.Color(180, 120, 160))
+
         self.obstacle_items: List[ObstacleProp] = []
+
+        self.moving_start: Vector
+        # 正在移动屏幕
+        self.screen_moving = False
+        # 正在拖拽小鸟
+        self.bird_moving = False
+
         self.paused = False
         self.translate_x = 0
         self.translate_y = 0
         self.scale = 1
+        
+        self.add_children([self.bg])
     
     def common_toggle_pause(self):
         self.paused = not self.paused
@@ -161,6 +172,11 @@ class GamePanel(ContainerSurface):
     def start_place(self, item: ObstacleTypes):
         self.placing_item = item
         pygame.mouse.set_visible(False)
+    
+    def draw_preview(self):
+        # place preview
+        if self.placing_item:
+            self.surface.blit(pygame.transform.rotate(self.placing_item.surfaces[0], self.placing_angle), (pygame.mouse.get_pos(), self.placing_item.surfaces[0].get_size()))
 
     '''
     --------------
@@ -188,15 +204,21 @@ class GamePanel(ContainerSurface):
                 if event.button == pygame.BUTTON_LEFT:
                     # 拖拽小鸟
                     # 释放技能
-                    pass
+                    # 移动屏幕
+                    self.screen_moving = True
                 # 放大/缩小
                 elif event.button == pygame.BUTTON_WHEELDOWN:
-                    self.scale = max(1, self.scale - 0.1)
+                    self.scale = max(0.1, self.scale - 0.1)
                 elif event.button == pygame.BUTTON_WHEELUP:
                     self.scale += 0.1
+        elif event.type == pygame.MOUSEMOTION:
+            if self.screen_moving:
+                new_pos = self.pos + event.rel
+                self.pos = [new_pos[0], self.pos[1]]
         elif event.type == pygame.MOUSEBUTTONUP:
             # 发射!
-            pass
+            # 取消移动屏幕
+            self.screen_moving = False
         return True
 
     def keyboard_event(self, event: pygame.event.Event) -> bool:
@@ -205,13 +227,10 @@ class GamePanel(ContainerSurface):
             self.placing_item = None
             self.end_place()
         return False
-    
+
     def draw(self):
-        # place preview
-        if self.placing_item:
-            self.parent_surface.blit(pygame.transform.rotate(self.placing_item.value[0], self.placing_angle), (pygame.mouse.get_pos(), self.placing_item.value[0].get_size()))
+        self.surface.fill((0, 0, 0, 0))
         # placed items
         for item in self.obstacle_items:
-            self.parent_surface.blit(pygame.transform.scale_by(pygame.transform.rotate(item['type'].value[0], item["angle"]), self.scale), (item['pos']*self.scale, item['type'].value[0].get_size()))
-        return super().draw()
-    
+            self.surface.blit(pygame.transform.rotate(item['type'].surfaces[0], item["angle"]), (item['pos']*self.scale, item['type'].surfaces[0].get_size()))
+        return super().draw(afterChildrenDraw=self.draw_preview)

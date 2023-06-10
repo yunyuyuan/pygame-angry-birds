@@ -19,7 +19,7 @@ class StaffItem(ElementSurface, Animation):
         ):
         super().__init__((191, 100), (6, 6), *args, **kwargs)
         self.obstacle_type = obstacle_type
-        self.img_surface = self.obstacle_type.value[0]
+        self.img_surface = self.obstacle_type.surfaces[0]
         self.img_size = Vector(self.img_surface.get_size())
         self.img_pos = self.size / 2 - self.img_size / 2
         self.onclick = onclick
@@ -44,12 +44,14 @@ class StaffItem(ElementSurface, Animation):
         pass
     
     def draw(self):
-        self.parent_surface.blit(self.img_surface, (self.img_pos, self.img_size))
-        pygame.draw.rect(self.parent_surface, pygame.Color(255, 0, 0) if self.hover else pygame.Color(255, 255, 255), (self.pos, self.size), width=1, border_radius=10)
+        self.surface.fill((0, 0, 0, 0))
+        pygame.draw.rect(self.surface, (255, 255, 255, 100) if self.hover else (0, 0, 0, 0), ((0, 0), self.size))
+        self.surface.blit(self.img_surface, (self.img_pos, self.img_size))
+        super().draw()
 
 
 class StaffPanel(ContainerSurface):
-    def __init__(self, start_place: Callable[[ObstacleTypes], Any], *args):
+    def __init__(self, start_place: Callable[[ObstacleTypes], Any]):
         super().__init__(size=(400, -120), pos=(5, 5), pos_bottom=True, visible=False)
         self.start_place = start_place
         self.bg = RectSurface(size=(0, 0), pos=(0, 0), color=pygame.Color(0, 0, 0, 100))
@@ -64,5 +66,6 @@ class StaffPanel(ContainerSurface):
         self.start_place(item)
     
     def draw(self):
+        self.surface.fill((0, 0, 0, 0))
         return super().draw()
 

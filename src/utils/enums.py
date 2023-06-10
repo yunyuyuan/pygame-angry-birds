@@ -40,5 +40,9 @@ def _load_obstacle(i: str, *pos: Tuple[int, int, int, int]):
 
 class ObstacleTypes(Enum):
     # (status0, status1, status2, status3, img, material)
-    g_w4_h1 = (*_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22)), MaterialType.glass)
+    g_w4_h1 = (tuple(_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22))), MaterialType.glass)
+    
+    @property
+    def surfaces(self) -> Tuple[pygame.Surface, pygame.Surface, pygame.Surface, pygame.Surface]:
+        return super().value[0]
 

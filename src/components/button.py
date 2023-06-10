@@ -22,7 +22,7 @@ class Button(Animation, ElementSurface):
         self.img_size = Vector(img.value[1])
         max_size = self.img_size * (init_scale+max_scale)
         super().__init__(size=max_size, pos=pos, *args, **kwargs)
-        self.center_pos = self.pos + self.size / 2
+        self.center_pos = self.size / 2
         self.init_scale = init_scale
         self.max_scale = max_scale
         self.scale = init_scale
@@ -47,9 +47,10 @@ class Button(Animation, ElementSurface):
         self.scale = self.init_scale + progress * self.max_scale
     
     def draw(self):
+        self.surface.fill((0, 0, 0, 0))
         new_size = self.img_size * self.scale
         target_rect = pygame.Rect(self.center_pos - new_size / 2, new_size)
-        self.parent_surface.blit(pygame.transform.scale(self.img, target_rect.size), target_rect)
+        self.surface.blit(pygame.transform.scale(self.img, target_rect.size), target_rect)
         if Game.debug:
-            pygame.draw.rect(self.parent_surface, pygame.Color(255, 0, 0), target_rect, width=1)
-            pygame.draw.rect(self.parent_surface, pygame.Color(255, 0, 0), (self.pos, self.surface.get_size()), width=1)
+            pygame.draw.rect(self.surface, (255, 0, 0), target_rect, width=1)
+        super().draw()
