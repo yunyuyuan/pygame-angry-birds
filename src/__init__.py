@@ -15,7 +15,7 @@ class Game(object):
     fps = fps
     fps_frame_sec = int(1000/fps)
 
-    geometry = (1200, 720)
+    geometry = (1200, 700)
     screen: pygame.Surface
     active_page: "PageSurface"
 

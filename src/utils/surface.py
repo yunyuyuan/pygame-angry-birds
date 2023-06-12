@@ -1,5 +1,5 @@
 from src import Game
-from src.utils.animation import Animatable
+from src.utils.animation import Animation
 from src.utils.vector import Vector
 
 import pygame
@@ -15,7 +15,7 @@ class Drawable():
         pass
 
 
-class EventSurface(Drawable):
+class BaseSurface(Drawable):
     '''
     带有鼠标和键盘事件的Drawable
     '''
@@ -23,7 +23,7 @@ class EventSurface(Drawable):
             self,
             size: Tuple[float, float],
             pos: Tuple[float, float],
-            parent: Union[pygame.Surface, "EventSurface", None] = None,
+            parent: Optional[Union[pygame.Surface, "BaseSurface"]] = None,
             visible = True,
             flags = pygame.SRCALPHA,
             pos_bottom = False,
@@ -32,7 +32,7 @@ class EventSurface(Drawable):
         ):
         super().__init__(*args, **kwargs)
         self.origin_size = size
-        self._parent: Union[pygame.Surface, "EventSurface"]
+        self._parent: Union[pygame.Surface, "BaseSurface"]
         self.size: Vector
         self.parent = Game.screen if parent is None else parent
         self.surface = pygame.Surface(size=self.size, flags=flags)
@@ -40,17 +40,20 @@ class EventSurface(Drawable):
         self.pos_bottom = pos_bottom
         self.pos_right = pos_right
         self.visible = visible
+        self._scale: float = 1
 
     @property
-    def parent(self) -> Union[pygame.Surface, "EventSurface"]:
+    def parent(self) -> Union[pygame.Surface, "BaseSurface"]:
         return self._parent
 
     @parent.setter
-    def parent(self, parent: Union[pygame.Surface, "EventSurface"]):
+    def parent(self, parent: Union[pygame.Surface, "BaseSurface"]):
         self._parent = parent
         # 子组件的 size 可能与父组件的 size 相关
         parent_size = parent.get_size() if isinstance(parent, pygame.Surface) else parent.size
         self.size = Vector((self.origin_size[0] if self.origin_size[0] > 0 else parent_size[0]+self.origin_size[0], self.origin_size[1] if self.origin_size[1] > 0 else parent_size[1]+self.origin_size[1]))
+        if getattr(self, 'surface', None):
+            self.surface = pygame.transform.scale(self.surface, self.size)
 
     @property
     def parent_surface(self) -> pygame.Surface:
@@ -68,8 +71,8 @@ class EventSurface(Drawable):
         self._pos = pos
 
     def is_mouse_inside(self, event: pygame.event.Event) -> bool:
-        return 0 <= event.pos[0]-self.pos[0] <= self.size[0] and \
-               1 <= event.pos[1]-self.pos[1] <= self.size[1]
+        return 0 <= event.pos[0]-self.pos[0] <= self.size[0]*self._scale and \
+               1 <= event.pos[1]-self.pos[1] <= self.size[1]*self._scale
 
     def mouse_event(self, event: pygame.event.Event) -> bool:
         ''' 返回True则说明被拦截，不再继续往下处理 '''
@@ -78,15 +81,17 @@ class EventSurface(Drawable):
     def keyboard_event(self, event: pygame.event.Event) -> bool:
         ''' 返回True则说明被拦截，不再继续往下处理 '''
         return False
+    
+    def animation_event(self):
+        if isinstance(self, Animation):
+            self.animate()
 
     def draw(self):
-        self.parent_surface.blit(self.surface, self.pos)
-        if Game.debug:
-            pygame.draw.rect(self.parent_surface, (50, 50, 50), (self.pos, self.surface.get_size()), width=1)
+        self.parent_surface.blit(pygame.transform.scale_by(self.surface, self._scale), (self.pos, self.size))
 
 
-ChildrenType = List[Union["ContainerSurface", "ElementSurface"]]
-class ContainerSurface(EventSurface, Animatable):
+ChildrenType = List[Union["ContainerSurface", "BaseSurface"]]
+class ContainerSurface(BaseSurface):
     '''
     * Container没有实体
     * Container拦截鼠标和键盘事件, 依次传给child处理
@@ -136,12 +141,12 @@ class ContainerSurface(EventSurface, Animatable):
         for child in self.children_stack:
             child.animation_event()
 
-    def draw(self, afterChildrenDraw: Optional[Callable]=None):
+    def draw(self):
         ''' 按顺序画出每一个子组件 '''
         for child in self.visible_children:
             child.draw()
-        if afterChildrenDraw:
-            afterChildrenDraw()
+        if Game.debug:
+            pygame.draw.rect(self.parent_surface, (50, 50, 50), (self.pos, Vector(self.surface.get_size())*self._scale), width=1)
         return super().draw()
 
 
@@ -159,7 +164,7 @@ class PageSurface(ContainerSurface):
         pass
 
 
-class ElementSurface(EventSurface, Animatable):
+class ElementSurface(BaseSurface):
     '''
     基本组件
     '''

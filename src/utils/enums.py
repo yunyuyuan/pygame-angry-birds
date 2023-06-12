@@ -16,12 +16,6 @@ class ButtonImgMap(Enum):
     my_preview = ((543,26), (148, 166))
 
 
-class CollisionTypes(Enum):
-    bird = 1
-    pig = 2
-    obstacle = 3
-
-
 class BirdTypes(Enum):
     red = 1,
     orange = 2,
@@ -38,11 +32,16 @@ def _load_obstacle(i: str, *pos: Tuple[int, int, int, int]):
     for p in pos:
         yield img.subsurface(pygame.Rect(p))
 
-class ObstacleTypes(Enum):
-    # (status0, status1, status2, status3, img, material)
-    g_w4_h1 = (tuple(_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22))), MaterialType.glass)
-    
+
+class CollisionTypes(Enum):
     @property
     def surfaces(self) -> Tuple[pygame.Surface, pygame.Surface, pygame.Surface, pygame.Surface]:
         return super().value[0]
+    
+    @property
+    def material(self) -> MaterialType:
+        return super().value[1]
 
+
+class ObstacleTypes(CollisionTypes):
+    g_w4_h1 = (tuple(_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22))), MaterialType.glass)

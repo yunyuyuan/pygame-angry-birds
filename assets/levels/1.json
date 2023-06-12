@@ -1,13 +1,25 @@
 {
   "geometry": {
-    "width": 3000,
-    "initial-scale": 1.5
+    "width": 2400,
+    "initial-scale": 0.5,
+    "min-scale": 0.5
   },
   "resources": {
     "slingshot": [100, 10],
     "birds": [1, 1, 1]
   },
   "fixed": [],
-  "obstacle": [],
+  "obstacles": [
+    {
+      "type": "g_w4_h1",
+      "angle": 90,
+      "pos": [500, 500]
+    },
+    {
+      "type": "g_w4_h1",
+      "angle": 0,
+      "pos": [200, 300]
+    }
+  ],
   "enemies": []
 }

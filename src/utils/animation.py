@@ -26,9 +26,3 @@ class Animation():
             new_progress = 1
         self.animation_progress = new_progress
         self.animation_step(self.animation_progress)
-
-
-class Animatable():
-    def animation_event(self):
-        if isinstance(self, Animation):
-            self.animate()
