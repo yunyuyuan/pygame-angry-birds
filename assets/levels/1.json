@@ -5,20 +5,73 @@
     "min-scale": 0.5
   },
   "resources": {
-    "slingshot": [100, 10],
-    "birds": [1, 1, 1]
+    "slingshot": [
+      100,
+      10
+    ],
+    "birds": [
+      1,
+      1,
+      1
+    ]
   },
   "fixed": [],
   "obstacles": [
     {
       "type": "g_w4_h1",
       "angle": 90,
-      "pos": [500, 500]
+      "pos": [
+        500,
+        100
+      ]
     },
     {
       "type": "g_w4_h1",
       "angle": 0,
-      "pos": [200, 300]
+      "pos": [
+        200,
+        50
+      ]
+    },
+    {
+      "type": "g_w4_h1",
+      "angle": 0,
+      "pos": [
+        1202.0,
+        28.0
+      ]
+    },
+    {
+      "type": "g_w4_h1",
+      "angle": 35,
+      "pos": [
+        1192.0,
+        88.0
+      ]
+    },
+    {
+      "type": "g_w4_h1",
+      "angle": -26,
+      "pos": [
+        680.0,
+        1192.0
+      ]
+    },
+    {
+      "type": "g_w4_h1",
+      "angle": 0,
+      "pos": [
+        219.0,
+        441.0
+      ]
+    },
+    {
+      "type": "g_w4_h1",
+      "angle": -55,
+      "pos": [
+        1256.0,
+        107.0
+      ]
     }
   ],
   "enemies": []

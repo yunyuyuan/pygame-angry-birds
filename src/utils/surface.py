@@ -45,6 +45,10 @@ class BaseSurface(Drawable):
     @property
     def parent(self) -> Union[pygame.Surface, "BaseSurface"]:
         return self._parent
+     
+    @property
+    def relative_mouse(self):
+        return (Vector(pygame.mouse.get_pos()) - self.pos)/self._scale
 
     @parent.setter
     def parent(self, parent: Union[pygame.Surface, "BaseSurface"]):
@@ -123,7 +127,7 @@ class ContainerSurface(BaseSurface):
         # 鼠标在container内部, 拦截
         if self.is_mouse_inside(event=event):
             # 修改为相对坐标
-            event.pos = Vector(event.pos) - self.pos
+            event.pos = self.relative_mouse
             for child in self.children_stack:
                 if child.mouse_event(event):
                     break
@@ -141,10 +145,12 @@ class ContainerSurface(BaseSurface):
         for child in self.children_stack:
             child.animation_event()
 
-    def draw(self):
+    def draw(self, after_draw_children: Optional[Callable] = None):
         ''' 按顺序画出每一个子组件 '''
         for child in self.visible_children:
             child.draw()
+        if after_draw_children:
+            after_draw_children()
         if Game.debug:
             pygame.draw.rect(self.parent_surface, (50, 50, 50), (self.pos, Vector(self.surface.get_size())*self._scale), width=1)
         return super().draw()

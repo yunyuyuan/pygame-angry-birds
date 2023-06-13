@@ -43,6 +43,10 @@ class GameCollisionObject(GameObject):
     def collision(self, ke: float):
         pass
 
+    def draw(self):
+        real_pos = (self.pos[0], self.parent.size[1] - self.pos[1])
+        self.parent_surface.blit(pygame.transform.rotate(self.current_surface, self.angle), (real_pos, self.size))
+
 
 class GameObstacleObject(GameCollisionObject):
     def __init__(self, pos: Tuple[float, float], type: str, angle: float, *args, **kwargs):
@@ -52,11 +56,6 @@ class GameObstacleObject(GameCollisionObject):
             angle=angle,
             *args, **kwargs
         )
-
-    def draw(self):
-        # self.surface.fill((0, 0, 0, 0))
-        self.parent_surface.blit(pygame.transform.rotate(self.current_surface, self.angle), (self.pos, self.size))
-        # return super().draw()
 
 class GameBirdObject(GameCollisionObject):
     def __init__(self, *args, **kwargs):

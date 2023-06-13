@@ -1,5 +1,6 @@
+from copy import deepcopy
 import json
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple, Union
 
 import pygame
 from src import Game
@@ -18,15 +19,16 @@ class GamePanel(ContainerSurface):
     '''
     def __init__(self, end_place: Callable, *args, **kwargs):
         # 读取level
-        with open(get_asset_path("levels", '1.json')) as fp:
+        self.config_path = get_asset_path("levels", '1.json')
+        with open(self.config_path) as fp:
             self.config = json.load(fp)
         super().__init__(
             size=(self.config['geometry']['width'], (Game.geometry[1]-GamePanel.Bottom)*(self.config['geometry']['width']/Game.geometry[0])), 
             *args, **kwargs
         )
         # 背景
-        # self.bg = RectSurface(size=(0, 0), pos=(0, 0), color=pygame.Color(180, 120, 160))
-        # self.add_children([self.bg])
+        self.bg = RectSurface(size=(0, 0), pos=(0, 0), color=pygame.Color(180, 120, 160))
+        self.add_children([self.bg])
         # 放置obstacles
         for obstacle in self.config["obstacles"]:
             self.add_obstacle(obstacle['type'], obstacle['angle'], obstacle['pos'])
@@ -83,10 +85,6 @@ class GamePanel(ContainerSurface):
     def add_enemy(self):
         pass
 
-    
-    def calc_pos_y(self):
-        self.paused = not self.paused
-
     '''
     editing methods
     --------------
@@ -95,14 +93,13 @@ class GamePanel(ContainerSurface):
         self.placing_item = item
         pygame.mouse.set_visible(False)
     
-    # def draw_preview(self):
-    #     # place preview
-    #     if self.placing_item:
-    #         self.surface.blit(pygame.transform.rotate(self.placing_item.surfaces[0], self.placing_angle), (pygame.mouse.get_pos(), self.placing_item.surfaces[0].get_size()))
+    def draw_preview(self):
+        if self.placing_item:
+            self.surface.blit(pygame.transform.rotate(self.placing_item.surfaces[0], self.placing_angle), (self.relative_mouse, self.placing_item.surfaces[0].get_size()))
 
     '''
     --------------
-    '''  
+    '''
 
     def mouse_event(self, event: pygame.event.Event) -> bool:
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -112,7 +109,7 @@ class GamePanel(ContainerSurface):
                     self.add_obstacle(
                         type=self.placing_item.name,
                         angle=self.placing_angle,
-                        pos=pygame.mouse.get_pos()
+                        pos=(self.relative_mouse[0], self.size[1] - self.relative_mouse[1])
                     )
                     pygame.mouse.set_visible(True)
                     self.placing_angle = 0
@@ -132,11 +129,11 @@ class GamePanel(ContainerSurface):
                 elif event.button == pygame.BUTTON_WHEELDOWN:
                     self.scale = max(self.config['geometry']['min-scale'], self.scale - 0.1)
                 elif event.button == pygame.BUTTON_WHEELUP:
-                    self.scale += 0.1
+                    self.scale = min(self.scale + 0.1, 1)
         elif event.type == pygame.MOUSEMOTION:
             if self.screen_moving:
                 new_pos = self.pos + event.rel
-                self.pos = [new_pos[0], self.pos[1]]
+                self.pos = [0 if new_pos[0] >= 0 else (Game.geometry[0]-self.size[0]*self.scale if new_pos[0] <= Game.geometry[0]-self.size[0]*self.scale else new_pos[0]), self.pos[1]]
         elif event.type == pygame.MOUSEBUTTONUP:
             # 发射!
             # 取消移动屏幕
@@ -148,8 +145,16 @@ class GamePanel(ContainerSurface):
             pygame.mouse.set_visible(True)
             self.placing_item = None
             self.end_place()
+            with open(self.config_path, 'w') as fp:
+                new_config = deepcopy(self.config)
+                new_config['obstacles'] = list(map(lambda child: {
+                    "type": child.collision_type.name,
+                    "angle": child.angle,
+                    "pos": child.pos
+                }, [x for x in self.children if isinstance(x, GameObstacleObject)]))
+                json.dump(new_config, fp, indent=2)
         return False
 
     def draw(self):
         self.surface.fill((0, 0, 0, 0))
-        return super().draw()
+        return super().draw(after_draw_children=self.draw_preview)

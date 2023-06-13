@@ -1,6 +1,6 @@
 
 
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Optional, Tuple
 
 import pygame
 from src.components.rect import RectSurface
@@ -68,4 +68,3 @@ class StaffPanel(ContainerSurface):
     def draw(self):
         self.surface.fill((0, 0, 0, 0))
         return super().draw()
-
