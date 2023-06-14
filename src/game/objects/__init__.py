@@ -1,40 +1,47 @@
+import math
 from typing import Tuple
 import pygame
 import pymunk
-from src.utils.enums import CollisionTypes, ObstacleTypes
+from src.utils.enums import CollisionTypes, MaterialShape, ObstacleTypes
 
 from src.utils.surface import BaseSurface
 from src.utils.vector import Vector
 
-__all__ = [
-    "FixedLineObject",
-    "FixedPolyObject",
-    "ObstacleRectObject",
-    "OrangeBirdObject"
-]
 
 class GameObject(BaseSurface):
     '''
     pymunk & pygame
     游戏对象，用于创建一个物理引擎内的物体，并可以画到屏幕上
     '''
-    def __init__(self, angle: float, *args, **kwargs):
+    def __init__(self, angle = 0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.body: pymunk.Body
+        self.shape: pymunk.Shape
         self.angle = angle
-        self.shape = pymunk.Shape
 
+    def reload(self):
+        pass
+
+    def draw(self):
+        raise NotImplementedError("You should create draw() of GameObject")
 
 class GameCollisionObject(GameObject):
     '''
     带碰撞的GameObject
     '''
-    def __init__(self, collision_type: CollisionTypes, *args, **kwargs):
-        super().__init__(size=collision_type.surfaces[0].get_size(),*args, **kwargs)
+    def __init__(self, space: pymunk.Space, collision_type: CollisionTypes, *args, **kwargs):
+        super().__init__(size=collision_type.size,*args, **kwargs)
+        self.space = space
         self.collision_type = collision_type
         
         # 首次把状态设为 0
         self.collision_status = 0
+    
+    def add_to_space(self):
+        self.space.add(self.body, self.shape)
+
+    def remove_from_space(self):
+        self.space.remove(self.body, self.shape)
 
     @property
     def current_surface(self):
@@ -56,6 +63,42 @@ class GameObstacleObject(GameCollisionObject):
             angle=angle,
             *args, **kwargs
         )
+        if self.collision_type.material_shape == MaterialShape.box:
+            moment = pymunk.moment_for_box(10, self.collision_type.size)
+            self.body = pymunk.Body(10, moment, body_type=pymunk.Body.DYNAMIC)
+            self.shape = pymunk.Poly.create_box(self.body, size=self.collision_type.size)
+            self.shape.friction = 0.5
+            self.shape.collision_type = self.collision_type.material_type.value
+            self.body.position = self.pos
+            self.body.angle = self.angle
+        else:
+            pass
+        self.add_to_space()
+
+    def reload(self):            
+        self.body.position = self.pos
+        self.body.angle = self.angle
+        self.body.velocity = (0,0)
+        return super().reload()
+    
+    def draw(self):
+        ps = [
+            p.rotated(self.shape.body.angle) + self.shape.body.position
+            for p in self.shape.get_vertices()
+        ]
+        ps = [(round(p.x), round(self.parent.size[1] - p.y)) for p in ps]
+        ps += [ps[0]]
+        
+        p = (self.body.position.x, self.parent.size[1] - self.body.position.y)
+
+        angle_degrees = math.degrees(self.body.angle)
+        rotated_surface = pygame.transform.rotate(self.current_surface, angle_degrees)
+
+        offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
+        p = p - offset
+
+        self.parent_surface.blit(rotated_surface, (p.x, p.y))
+
 
 class GameBirdObject(GameCollisionObject):
     def __init__(self, *args, **kwargs):

@@ -16,17 +16,6 @@ from src.utils.enums import ButtonImgMap
 from ..utils.surface import PageSurface
 
 
-class GameEngine():
-    '''
-    物理引擎相关
-    '''
-    def __init__(self) -> None:
-        self.space: pymunk.Space
-        self.launched_birds: List[GameBirdObject] = []
-        self.obstacles: List[GameObstacleObject] = []
-
-
-
 class GamePage(PageSurface):
     def __init__(self, editing=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -50,7 +39,7 @@ class GamePage(PageSurface):
         # 添加物料
         self.staff_btn = Button(pos=(5, 5), img=ButtonImgMap.my_materials, init_scale=0.6, visible=self.editing, on_click=self.toggle_staffs_panel)
         # 切换预览模式
-        self.preview_btn = Button(pos=(305, 5), img=ButtonImgMap.my_preview, init_scale=0.6, visible=self.editing)        
+        self.preview_btn = Button(pos=(305, 5), img=ButtonImgMap.my_preview, init_scale=0.6, visible=self.editing, on_click=self.toggle_preview)        
         # 物品栏
         self.staffs_panel = StaffPanel(start_place=self.start_place)
         
@@ -96,8 +85,11 @@ class GamePage(PageSurface):
     editing methods
     --------------
     '''   
-    def toggle_staffs_panel(self, event: pygame.event.Event):
+    def toggle_staffs_panel(self, _):
         self.staffs_panel.visible = not self.staffs_panel.visible
+    
+    def toggle_preview(self, _):
+        self.game_panel.toggle_pause(True)
     
     def start_place(self, item):
         self.game_panel.start_place(item)
@@ -115,5 +107,6 @@ class GamePage(PageSurface):
     '''
     
     def draw(self):
+        self.game_panel.pymunk_step()
         self.surface.fill("#13b974")
         return super().draw()

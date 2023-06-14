@@ -23,9 +23,14 @@ class BirdTypes(Enum):
 
 
 class MaterialType(Enum):
-    glass = ()
-    wood = ()
-    stone = ()
+    glass = 1
+    wood = 2
+    bird = 3
+    stone = 4
+
+class MaterialShape(Enum):
+    box = 1
+
 
 def _load_obstacle(i: str, *pos: Tuple[int, int, int, int]):
     img = pygame.image.load(get_asset_path(f"images/INGAME_BLOCKS_{i}.png"))
@@ -37,11 +42,19 @@ class CollisionTypes(Enum):
     @property
     def surfaces(self) -> Tuple[pygame.Surface, pygame.Surface, pygame.Surface, pygame.Surface]:
         return super().value[0]
-    
+
     @property
-    def material(self) -> MaterialType:
+    def size(self) -> Tuple[int, int]:
+        return self.surfaces[0].get_size()
+
+    @property
+    def material_type(self) -> MaterialType:
         return super().value[1]
+
+    @property
+    def material_shape(self) -> MaterialType:
+        return super().value[2]
 
 
 class ObstacleTypes(CollisionTypes):
-    g_w4_h1 = (tuple(_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22))), MaterialType.glass)
+    g_w4_h1 = (tuple(_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22))), MaterialType.glass, MaterialShape.box)

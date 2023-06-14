@@ -1,8 +1,10 @@
 from copy import deepcopy
 import json
+import math
 from typing import Callable, List, Optional, Tuple, Union
 
 import pygame
+import pymunk
 from src import Game
 from src.components.rect import RectSurface
 from src.game.objects import GameObstacleObject
@@ -18,6 +20,8 @@ class GamePanel(ContainerSurface):
     编辑/游戏界面通用
     '''
     def __init__(self, end_place: Callable, *args, **kwargs):
+        self.space = pymunk.Space()
+        self.space.gravity = pymunk.Vec2d(0.0, -900.0)
         # 读取level
         self.config_path = get_asset_path("levels", '1.json')
         with open(self.config_path) as fp:
@@ -26,6 +30,10 @@ class GamePanel(ContainerSurface):
             size=(self.config['geometry']['width'], (Game.geometry[1]-GamePanel.Bottom)*(self.config['geometry']['width']/Game.geometry[0])), 
             *args, **kwargs
         )
+        # 地面
+        ground_line = pymunk.Segment(self.space.static_body, (0,0), (self.config['geometry']['width'],0), 0.0)
+        ground_line.friction = 0.5
+        self.space.add(ground_line)
         # 背景
         self.bg = RectSurface(size=(0, 0), pos=(0, 0), color=pygame.Color(180, 120, 160))
         self.add_children([self.bg])
@@ -53,9 +61,7 @@ class GamePanel(ContainerSurface):
         # 正在拖拽小鸟
         self.bird_moving = False
 
-        self.paused = False
-        self.translate_x = 0
-        self.translate_y = 0
+        self.paused = True
         self.scale = self.config['geometry']['initial-scale']
         
     
@@ -71,6 +77,7 @@ class GamePanel(ContainerSurface):
     
     def add_obstacle(self, type, angle, pos):
         self.add_children([GameObstacleObject(
+            space=self.space,
             type=type,
             angle=angle,
             pos=pos,
@@ -85,6 +92,23 @@ class GamePanel(ContainerSurface):
     def add_enemy(self):
         pass
 
+    def toggle_pause(self, reset = False):
+        self.paused = not self.paused
+        if self.paused and reset:
+            # 重置
+            for obstacle in self.obstacles:
+                obstacle.reload()
+    
+    def pymunk_step(self):
+        if self.paused:
+            self.space.step(0)
+        else:
+            self.space.step(1.0/Game.fps)
+    
+    @property
+    def obstacles(self):
+        return [x for x in self.children if isinstance(x, GameObstacleObject)]
+
     '''
     editing methods
     --------------
@@ -95,7 +119,9 @@ class GamePanel(ContainerSurface):
     
     def draw_preview(self):
         if self.placing_item:
-            self.surface.blit(pygame.transform.rotate(self.placing_item.surfaces[0], self.placing_angle), (self.relative_mouse, self.placing_item.surfaces[0].get_size()))
+            rotated_surface = pygame.transform.rotate(self.placing_item.surfaces[0], math.degrees(self.placing_angle))
+            offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
+            self.surface.blit(rotated_surface, self.relative_mouse - offset)
 
     '''
     --------------
@@ -116,9 +142,9 @@ class GamePanel(ContainerSurface):
                     self.placing_item = None
                     self.end_place()
                 elif event.button == pygame.BUTTON_WHEELDOWN:
-                    self.placing_angle += 1
+                    self.placing_angle += 0.03
                 elif event.button == pygame.BUTTON_WHEELUP:
-                    self.placing_angle -= 1
+                    self.placing_angle -= 0.03
             else:
                 if event.button == pygame.BUTTON_LEFT:
                     # 拖拽小鸟
@@ -147,11 +173,11 @@ class GamePanel(ContainerSurface):
             self.end_place()
             with open(self.config_path, 'w') as fp:
                 new_config = deepcopy(self.config)
-                new_config['obstacles'] = list(map(lambda child: {
-                    "type": child.collision_type.name,
-                    "angle": child.angle,
-                    "pos": child.pos
-                }, [x for x in self.children if isinstance(x, GameObstacleObject)]))
+                new_config['obstacles'] = list(map(lambda obstacle: {
+                    "type": obstacle.collision_type.name,
+                    "angle": obstacle.angle,
+                    "pos": obstacle.pos
+                }, self.obstacles))
                 json.dump(new_config, fp, indent=2)
         return False
 

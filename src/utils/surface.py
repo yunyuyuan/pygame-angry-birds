@@ -94,7 +94,7 @@ class BaseSurface(Drawable):
         self.parent_surface.blit(pygame.transform.scale_by(self.surface, self._scale), (self.pos, self.size))
 
 
-ChildrenType = List[Union["ContainerSurface", "BaseSurface"]]
+ChildType = Union["ContainerSurface", "BaseSurface"]
 class ContainerSurface(BaseSurface):
     '''
     * Container没有实体
@@ -107,7 +107,7 @@ class ContainerSurface(BaseSurface):
         *args, **kwargs
     ):
         super().__init__(size=size if size else Game.geometry, pos=pos, *args, **kwargs)
-        self.children: ChildrenType = []
+        self.children: List[ChildType] = []
 
     @property
     def visible_children(self):
@@ -118,10 +118,13 @@ class ContainerSurface(BaseSurface):
         ''' 所有的子组件，事件将从右往左依次处理 '''
         return reversed(self.visible_children)
 
-    def add_children(self, children: ChildrenType):
+    def add_children(self, children: List[ChildType]):
         for child in children:
             child.parent = self
         self.children.extend(children)
+
+    def remove_child(self, child: ChildType):
+        self.children.remove(child)
 
     def mouse_event(self, event: pygame.event.Event) -> bool:
         # 鼠标在container内部, 拦截
