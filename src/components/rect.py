@@ -15,7 +15,7 @@ class RectSurface(ElementSurface):
         self.color = color
         
     def mouse_event(self, event: pygame.event.Event) -> bool:
-        is_inside = self.is_mouse_inside(event)
+        is_inside = self.check_mouse_inside(event)
         if event.type == pygame.MOUSEMOTION:
             if is_inside:
                 pass

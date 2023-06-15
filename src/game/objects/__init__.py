@@ -2,6 +2,7 @@ import math
 from typing import Tuple
 import pygame
 import pymunk
+from src import Game
 from src.utils.enums import CollisionTypes, MaterialShape, ObstacleTypes
 
 from src.utils.surface import BaseSurface
@@ -16,7 +17,7 @@ class GameObject(BaseSurface):
     def __init__(self, angle = 0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.body: pymunk.Body
-        self.shape: pymunk.Shape
+        self.shape: pymunk.Poly | pymunk.Circle
         self.angle = angle
 
     def reload(self):
@@ -73,31 +74,42 @@ class GameObstacleObject(GameCollisionObject):
             self.body.angle = self.angle
         else:
             pass
+        self.deleting_focus = False
         self.add_to_space()
 
-    def reload(self):            
+    def reload(self):
         self.body.position = self.pos
         self.body.angle = self.angle
         self.body.velocity = (0,0)
+        self.body.angular_velocity = 0
         return super().reload()
     
+    def check_mouse_inside(self, pos: Tuple[float, float]):
+        if isinstance(self.shape, pymunk.Poly):
+            self.deleting_focus = self.shape.point_query(pos).distance <= 0
+        elif isinstance(self.shape, pymunk.Circle):
+            pass
+        return self.deleting_focus
+    
     def draw(self):
-        ps = [
-            p.rotated(self.shape.body.angle) + self.shape.body.position
-            for p in self.shape.get_vertices()
-        ]
-        ps = [(round(p.x), round(self.parent.size[1] - p.y)) for p in ps]
-        ps += [ps[0]]
-        
-        p = (self.body.position.x, self.parent.size[1] - self.body.position.y)
+        pos = (self.body.position.x, self.parent.size[1] - self.body.position.y)
 
         angle_degrees = math.degrees(self.body.angle)
         rotated_surface = pygame.transform.rotate(self.current_surface, angle_degrees)
 
         offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
-        p = p - offset
+        pos = pos - offset
 
-        self.parent_surface.blit(rotated_surface, (p.x, p.y))
+        self.parent_surface.blit(rotated_surface, (pos.x, pos.y))
+        if Game.debug or self.deleting_focus:
+            if isinstance(self.shape, pymunk.Poly):
+                ps = [
+                    p.rotated(self.shape.body.angle) + self.shape.body.position
+                    for p in self.shape.get_vertices()
+                ]
+                ps = [(round(p.x), round(self.parent.size[1] - p.y)) for p in ps]
+                ps += [ps[0]]
+                pygame.draw.lines(self.parent_surface, pygame.Color("red") if self.deleting_focus else pygame.Color("black"), False, ps, 1)
 
 
 class GameBirdObject(GameCollisionObject):

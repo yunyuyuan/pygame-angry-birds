@@ -5,15 +5,16 @@ import pygame
 
 from src.utils import get_asset_path
 
-class ButtonImgMap(Enum):
+class ButtonTypes(Enum):
     setting = ((10, 10), (10, 10))
     pause = ((254, 739), (99, 108))
     resume = ((902, 294), (71, 80))
     reset = ((254, 852), (99, 108))
 
     # my buttons
-    my_materials = ((38,26), (148, 166))
-    my_preview = ((543,26), (148, 166))
+    my_materials = ((13,26), (148, 166))
+    my_preview = ((516,26), (148, 166))
+    my_delete = ((688,26), (148, 166))
 
 
 class BirdTypes(Enum):

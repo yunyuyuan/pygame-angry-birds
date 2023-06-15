@@ -1,8 +1,8 @@
-from typing import Callable, List, TYPE_CHECKING, Optional
+from typing import Any, Callable, List, TYPE_CHECKING, Optional
 
 from src import Game
 from src.components.side_panel import SidePanel
-from src.game.editor_panel import StaffPanel
+from src.game.staffs_panel import StaffsPanel
 from src.game.game_panel import GamePanel
 if TYPE_CHECKING:
     from src.game.objects import GameBirdObject, GameObstacleObject
@@ -12,8 +12,8 @@ import pymunk
 
 from src.components.button import Button
 from src.components.rect import RectSurface
-from src.utils.enums import ButtonImgMap
-from ..utils.surface import PageSurface
+from src.utils.enums import ButtonTypes
+from ..utils.surface import ChildType, PageSurface
 
 
 class GamePage(PageSurface):
@@ -24,32 +24,35 @@ class GamePage(PageSurface):
         '''
         gaming
         '''
-        self.pause_btn = Button(pos=(250, 150), img=ButtonImgMap.pause, visible=not self.editing, on_click=self.pause_game)
-        self.reset_btn = Button(pos=(450, 150), img=ButtonImgMap.reset, visible=not self.editing)
+        self.pause_btn = Button(pos=(250, 150), button_type=ButtonTypes.pause, visible=not self.editing, on_click=self.pause_game)
+        self.reset_btn = Button(pos=(450, 150), button_type=ButtonTypes.reset, visible=not self.editing)
 
         # 侧边栏
         self.left_board = SidePanel(width=300, right=True, visible=not self.editing)
         self.left_board_bg = RectSurface(size=(0, 0), pos=(0, 0), color=pygame.Color(0, 0, 0))
-        self.resume_btn = Button(pos=(50, 50), img=ButtonImgMap.resume)
+        self.resume_btn = Button(pos=(50, 50), button_type=ButtonTypes.resume)
         self.left_board.add_children([self.left_board_bg, self.resume_btn])
         
         '''
         editing
         '''
+        self.previewing = False
         # 添加物料
-        self.staff_btn = Button(pos=(5, 5), img=ButtonImgMap.my_materials, init_scale=0.6, visible=self.editing, on_click=self.toggle_staffs_panel)
+        self.staff_btn = Button(pos=(5, 5), button_type=ButtonTypes.my_materials, init_scale=0.6, visible=self.editing, on_click=self.toggle_staffs_panel)
+        # 删除物料
+        self.delete_btn = Button(pos=(125, 5), button_type=ButtonTypes.my_delete, init_scale=0.6, visible=self.editing, on_click=self.start_delete)        
         # 切换预览模式
-        self.preview_btn = Button(pos=(305, 5), img=ButtonImgMap.my_preview, init_scale=0.6, visible=self.editing, on_click=self.toggle_preview)        
+        self.preview_btn = Button(pos=(245, 5), button_type=ButtonTypes.my_preview, init_scale=0.6, visible=self.editing, on_click=self.toggle_preview)        
         # 物品栏
-        self.staffs_panel = StaffPanel(start_place=self.start_place)
+        self.staffs_panel = StaffsPanel(start_place=self.start_place)
         
         '''
         common
         '''
-        self.game_panel = GamePanel(end_place=self.end_place)
+        self.game_panel = GamePanel(end_place=self.end_place, end_delete=self.end_delete)
 
         self.add_children([self.game_panel, 
-                           self.staff_btn, self.preview_btn, self.staffs_panel,
+                           self.staff_btn, self.delete_btn, self.preview_btn, self.staffs_panel,
                            self.pause_btn, self.reset_btn, self.left_board])
 
     def common_pause_resume(self):
@@ -84,24 +87,37 @@ class GamePage(PageSurface):
     '''
     editing methods
     --------------
-    '''   
+    '''
+    def toggle_operating(self, b: bool, exclude: List[ChildType] = []):
+        for item in [x for x in [
+            self.staff_btn,
+            self.staffs_panel,
+            self.delete_btn,
+            self.preview_btn,
+        ] if x not in exclude]:
+            item.visible = b
+
     def toggle_staffs_panel(self, _):
         self.staffs_panel.visible = not self.staffs_panel.visible
-    
+
     def toggle_preview(self, _):
         self.game_panel.toggle_pause(True)
+        self.previewing = not self.previewing
+        self.toggle_operating(not self.previewing, [self.preview_btn])
     
     def start_place(self, item):
         self.game_panel.start_place(item)
-        self.staff_btn.visible = False
-        self.preview_btn.visible = False
-        self.staffs_panel.visible = False
+        self.toggle_operating(False)
 
     def end_place(self):
-        self.staff_btn.visible = True
-        self.preview_btn.visible = True
-        self.staffs_panel.visible = True
+        self.toggle_operating(True)
+
+    def start_delete(self, _):
+        self.game_panel.start_delete()
+        self.toggle_operating(False)
     
+    def end_delete(self):
+        self.toggle_operating(True)
     '''
     --------------
     '''

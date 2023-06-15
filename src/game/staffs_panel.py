@@ -26,7 +26,7 @@ class StaffItem(ElementSurface, Animation):
         self.hover = False
     
     def mouse_event(self, event: pygame.event.Event) -> bool:
-        is_inside = self.is_mouse_inside(event)
+        is_inside = self.check_mouse_inside(event)
         if event.type == pygame.MOUSEMOTION:
             if is_inside:
                 # button 放大动画
@@ -37,6 +37,7 @@ class StaffItem(ElementSurface, Animation):
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if is_inside:
                 self.onclick(self.obstacle_type)
+                return True
         self.hover = is_inside
         return False
     
@@ -50,7 +51,7 @@ class StaffItem(ElementSurface, Animation):
         super().draw()
 
 
-class StaffPanel(ContainerSurface):
+class StaffsPanel(ContainerSurface):
     def __init__(self, start_place: Callable[[ObstacleTypes], Any]):
         super().__init__(size=(400, -120), pos=(5, 5), pos_bottom=True, visible=False)
         self.start_place = start_place

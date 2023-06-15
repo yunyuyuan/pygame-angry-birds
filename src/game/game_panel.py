@@ -19,7 +19,7 @@ class GamePanel(ContainerSurface):
     '''
     编辑/游戏界面通用
     '''
-    def __init__(self, end_place: Callable, *args, **kwargs):
+    def __init__(self, end_place: Callable, end_delete: Callable, *args, **kwargs):
         self.space = pymunk.Space()
         self.space.gravity = pymunk.Vec2d(0.0, -900.0)
         # 读取level
@@ -51,6 +51,9 @@ class GamePanel(ContainerSurface):
         self.placing_item: Optional[ObstacleTypes] = None
         self.placing_angle: float = 0
         self.end_place = end_place
+        # 正在移除
+        self.deleting = False
+        self.end_delete = end_delete
         
         '''
         common
@@ -83,8 +86,9 @@ class GamePanel(ContainerSurface):
             pos=pos,
         )])
     
-    def del_obstacle(self):
-        pass
+    def del_obstacle(self, obstacle: GameObstacleObject):
+        obstacle.remove_from_space()
+        self.remove_child(obstacle)
 
     def add_fixed(self):
         pass
@@ -94,10 +98,11 @@ class GamePanel(ContainerSurface):
 
     def toggle_pause(self, reset = False):
         self.paused = not self.paused
-        if self.paused and reset:
+        if reset:
             # 重置
             for obstacle in self.obstacles:
                 obstacle.reload()
+                self.space.reindex_shapes_for_body(obstacle.body)
     
     def pymunk_step(self):
         if self.paused:
@@ -116,6 +121,9 @@ class GamePanel(ContainerSurface):
     def start_place(self, item: ObstacleTypes):
         self.placing_item = item
         pygame.mouse.set_visible(False)
+
+    def start_delete(self):
+        self.deleting = not self.deleting
     
     def draw_preview(self):
         if self.placing_item:
@@ -128,14 +136,15 @@ class GamePanel(ContainerSurface):
     '''
 
     def mouse_event(self, event: pygame.event.Event) -> bool:
+        pos = (self.relative_mouse[0], self.size[1] - self.relative_mouse[1])
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # 放置
             if self.placing_item:
+                # 放置
                 if event.button == pygame.BUTTON_LEFT:
                     self.add_obstacle(
                         type=self.placing_item.name,
                         angle=self.placing_angle,
-                        pos=(self.relative_mouse[0], self.size[1] - self.relative_mouse[1])
+                        pos=pos
                     )
                     pygame.mouse.set_visible(True)
                     self.placing_angle = 0
@@ -145,6 +154,15 @@ class GamePanel(ContainerSurface):
                     self.placing_angle += 0.03
                 elif event.button == pygame.BUTTON_WHEELUP:
                     self.placing_angle -= 0.03
+            elif self.deleting:
+                # 删除
+                if event.button == pygame.BUTTON_LEFT:
+                    for obstacle in self.obstacles:
+                        if obstacle.check_mouse_inside(pos):
+                            self.del_obstacle(obstacle)
+                            self.deleting = False
+                            self.end_delete()
+                            break
             else:
                 if event.button == pygame.BUTTON_LEFT:
                     # 拖拽小鸟
@@ -160,6 +178,10 @@ class GamePanel(ContainerSurface):
             if self.screen_moving:
                 new_pos = self.pos + event.rel
                 self.pos = [0 if new_pos[0] >= 0 else (Game.geometry[0]-self.size[0]*self.scale if new_pos[0] <= Game.geometry[0]-self.size[0]*self.scale else new_pos[0]), self.pos[1]]
+            elif self.deleting:
+                for obstacle in self.obstacles:
+                    if obstacle.check_mouse_inside(pos):
+                        break
         elif event.type == pygame.MOUSEBUTTONUP:
             # 发射!
             # 取消移动屏幕
@@ -167,19 +189,27 @@ class GamePanel(ContainerSurface):
         return True
 
     def keyboard_event(self, event: pygame.event.Event) -> bool:
-        if self.placing_item and event.key == pygame.K_ESCAPE:
-            pygame.mouse.set_visible(True)
-            self.placing_item = None
-            self.end_place()
-            with open(self.config_path, 'w') as fp:
-                new_config = deepcopy(self.config)
-                new_config['obstacles'] = list(map(lambda obstacle: {
-                    "type": obstacle.collision_type.name,
-                    "angle": obstacle.angle,
-                    "pos": obstacle.pos
-                }, self.obstacles))
-                json.dump(new_config, fp, indent=2)
+        if event.key == pygame.K_ESCAPE:
+            if self.placing_item:
+                pygame.mouse.set_visible(True)
+                self.placing_item = None
+                self.end_place()
+                self.write_config()
+            elif self.deleting:
+                self.deleting = False
+                self.end_delete()
+                self.write_config()
         return False
+    
+    def write_config(self):
+        with open(self.config_path, 'w') as fp:
+            new_config = deepcopy(self.config)
+            new_config['obstacles'] = list(map(lambda obstacle: {
+                "type": obstacle.collision_type.name,
+                "angle": obstacle.angle,
+                "pos": obstacle.pos
+            }, self.obstacles))
+            json.dump(new_config, fp, indent=2)
 
     def draw(self):
         self.surface.fill((0, 0, 0, 0))

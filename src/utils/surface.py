@@ -74,7 +74,7 @@ class BaseSurface(Drawable):
     def pos(self, pos):
         self._pos = pos
 
-    def is_mouse_inside(self, event: pygame.event.Event) -> bool:
+    def check_mouse_inside(self, event: pygame.event.Event) -> bool:
         return 0 <= event.pos[0]-self.pos[0] <= self.size[0]*self._scale and \
                1 <= event.pos[1]-self.pos[1] <= self.size[1]*self._scale
 
@@ -128,7 +128,7 @@ class ContainerSurface(BaseSurface):
 
     def mouse_event(self, event: pygame.event.Event) -> bool:
         # 鼠标在container内部, 拦截
-        if self.is_mouse_inside(event=event):
+        if self.check_mouse_inside(event=event):
             # 修改为相对坐标
             event.pos = self.relative_mouse
             for child in self.children_stack:

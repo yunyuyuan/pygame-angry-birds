@@ -2,7 +2,7 @@ import pygame
 from typing import Tuple, Callable, Any
 from ..utils.animation import Animation
 
-from src.utils.enums import ButtonImgMap
+from src.utils.enums import ButtonTypes
 from src.utils.vector import Vector
 
 from ..utils.surface import ElementSurface
@@ -13,13 +13,13 @@ class Button(Animation, ElementSurface):
     def __init__(
         self, 
         pos: Tuple[float, float],
-        img: ButtonImgMap,
+        button_type: ButtonTypes,
         on_click: Callable[[pygame.event.Event], Any] = lambda _: None,
         init_scale = 1.0,
         max_scale = 0.05,
         *args, **kwargs
     ):
-        self.img_size = Vector(img.value[1])
+        self.img_size = Vector(button_type.value[1])
         max_size = self.img_size * (init_scale+max_scale)
         super().__init__(size=max_size, pos=pos, *args, **kwargs)
         self.center_pos = self.size / 2
@@ -27,10 +27,10 @@ class Button(Animation, ElementSurface):
         self.max_scale = max_scale
         self.scale = init_scale
         self.on_click = on_click
-        self.img = clip_img("images/BUTTONS_SHEET_1.png" if not img.name.startswith("my_") else "images/MY_BUTTONS.png", *img.value)
+        self.img = clip_img("images/BUTTONS_SHEET_1.png" if not button_type.name.startswith("my_") else "images/MY_BUTTONS.png", *button_type.value)
         
     def mouse_event(self, event: pygame.event.Event) -> bool:
-        is_inside = self.is_mouse_inside(event)
+        is_inside = self.check_mouse_inside(event)
         if event.type == pygame.MOUSEMOTION:
             if is_inside:
                 # button 放大动画
@@ -41,6 +41,7 @@ class Button(Animation, ElementSurface):
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if is_inside:
                 self.on_click(event)
+                return True
         return False
     
     def animation_step(self, progress):
