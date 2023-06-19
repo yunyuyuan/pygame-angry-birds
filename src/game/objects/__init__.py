@@ -1,5 +1,5 @@
 import math
-from typing import Tuple
+from typing import List, Tuple
 import pygame
 import pymunk
 from src import Game
@@ -8,6 +8,12 @@ from src.utils.enums import CollisionTypes, MaterialShape, ObstacleTypes
 from src.utils.surface import BaseSurface
 from src.utils.vector import Vector
 
+def poly_box(body: pymunk.Body, pos: Tuple[float, float], size: Tuple[float, float]):
+    left_top = pos
+    right_top = (pos[0]+size[0], pos[1])
+    right_bottom = (pos[0]+size[0], pos[1]+size[1])
+    left_bottom = (pos[0], pos[1]+size[1])
+    return pymunk.Poly(body, [left_top, right_top, right_bottom, left_bottom])
 
 class GameObject(BaseSurface):
     '''
@@ -17,7 +23,8 @@ class GameObject(BaseSurface):
     def __init__(self, angle = 0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.body: pymunk.Body
-        self.shape: pymunk.Poly | pymunk.Circle
+        self.parent: BaseSurface
+        self.shapes: List[pymunk.Shape]
         self.angle = angle
 
     def reload(self):
@@ -39,10 +46,10 @@ class GameCollisionObject(GameObject):
         self.collision_status = 0
     
     def add_to_space(self):
-        self.space.add(self.body, self.shape)
+        self.space.add(self.body, *self.shapes)
 
     def remove_from_space(self):
-        self.space.remove(self.body, self.shape)
+        self.space.remove(self.body, *self.shapes)
 
     @property
     def current_surface(self):
@@ -65,15 +72,39 @@ class GameObstacleObject(GameCollisionObject):
             *args, **kwargs
         )
         if self.collision_type.material_shape == MaterialShape.box:
-            moment = pymunk.moment_for_box(10, self.collision_type.size)
-            self.body = pymunk.Body(10, moment, body_type=pymunk.Body.DYNAMIC)
-            self.shape = pymunk.Poly.create_box(self.body, size=self.collision_type.size)
-            self.shape.friction = 0.5
-            self.shape.collision_type = self.collision_type.material_type.value
+            # 实心box
+            self.body = pymunk.Body(10, moment=pymunk.moment_for_box(10, self.collision_type.size), body_type=pymunk.Body.DYNAMIC)
+            self.shapes = [pymunk.Poly.create_box(self.body, size=self.collision_type.size)]
+            self.body.position = self.pos
+            self.body.angle = self.angle
+        elif self.collision_type.material_shape == MaterialShape.hollow_box:
+            # 空心box
+            self.body = pymunk.Body(10, moment=pymunk.moment_for_box(10, self.collision_type.size), body_type=pymunk.Body.DYNAMIC)
+            square_size = self.collision_type.size[0]
+            small_size = square_size / 4.5
+            half = square_size / 2
+            self.shapes = [
+                poly_box(self.body, pos=(0-half, 0-half), size=(square_size, small_size)),
+                poly_box(self.body, pos=(square_size-small_size-half, small_size-half), size=(small_size, square_size-2*small_size)),
+                poly_box(self.body, pos=(0-half, square_size-small_size-half), size=(square_size, small_size)),
+                poly_box(self.body, pos=(0-half, small_size-half), size=(small_size, square_size-2*small_size)),
+            ]
+            self.body.position = self.pos
+            self.body.angle = self.angle
+        elif self.collision_type.material_shape == MaterialShape.circle:
+            # 实心圆
+            radius = self.collision_type.size[0]/2
+            self.body = pymunk.Body(10, pymunk.moment_for_circle(10, radius, radius), body_type=pymunk.Body.DYNAMIC)
+            self.shapes = [pymunk.Circle(self.body, radius)]
             self.body.position = self.pos
             self.body.angle = self.angle
         else:
-            pass
+            raise BaseException("You should handle material: "+self.collision_type.material_shape.name)
+        
+        for shape in self.shapes:
+            shape.friction = 0.5
+            shape.collision_type = self.collision_type.material_type.value
+
         self.deleting_focus = False
         self.add_to_space()
 
@@ -85,9 +116,9 @@ class GameObstacleObject(GameCollisionObject):
         return super().reload()
     
     def check_mouse_inside(self, pos: Tuple[float, float]):
-        if isinstance(self.shape, pymunk.Poly):
-            self.deleting_focus = self.shape.point_query(pos).distance <= 0
-        elif isinstance(self.shape, pymunk.Circle):
+        if isinstance(self.shapes, pymunk.Poly):
+            self.deleting_focus = self.shapes.point_query(pos).distance <= 0
+        elif isinstance(self.shapes, pymunk.Circle):
             pass
         return self.deleting_focus
     
@@ -102,14 +133,16 @@ class GameObstacleObject(GameCollisionObject):
 
         self.parent_surface.blit(rotated_surface, (pos.x, pos.y))
         if Game.debug or self.deleting_focus:
-            if isinstance(self.shape, pymunk.Poly):
-                ps = [
-                    p.rotated(self.shape.body.angle) + self.shape.body.position
-                    for p in self.shape.get_vertices()
-                ]
-                ps = [(round(p.x), round(self.parent.size[1] - p.y)) for p in ps]
-                ps += [ps[0]]
-                pygame.draw.lines(self.parent_surface, pygame.Color("red") if self.deleting_focus else pygame.Color("black"), False, ps, 1)
+            color = pygame.Color("red") if self.deleting_focus else pygame.Color("black")
+            for shape in self.shapes:
+                if isinstance(shape, pymunk.Poly):
+                    ps = [p.rotated(shape.body.angle) + shape.body.position for p in shape.get_vertices()]
+                    ps = [(round(p.x), round(self.parent.size[1] - p.y)) for p in ps]
+                    ps += [ps[0]]
+                    pygame.draw.lines(self.parent_surface, color, False, ps, 1)
+                elif isinstance(shape, pymunk.Circle):
+                    p = shape.body.position
+                    pygame.draw.circle(self.parent_surface, color, (round(p.x), round(self.parent.size[1] - p.y)), shape.radius, width=1)
 
 
 class GameBirdObject(GameCollisionObject):

@@ -18,6 +18,8 @@ def start_game():
 
         Game.active_page.draw()
 
+        fps = int(clock.get_fps())
+        pygame.display.set_caption(str(fps))
         # flip() the display to put your work on screen
         pygame.display.flip()
         clock.tick(Game.fps)

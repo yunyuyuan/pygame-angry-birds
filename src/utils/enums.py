@@ -31,6 +31,8 @@ class MaterialType(Enum):
 
 class MaterialShape(Enum):
     box = 1
+    hollow_box = 2
+    circle = 3
 
 
 def _load_obstacle(i: str, *pos: Tuple[int, int, int, int]):
@@ -58,4 +60,8 @@ class CollisionTypes(Enum):
 
 
 class ObstacleTypes(CollisionTypes):
-    g_w4_h1 = (tuple(_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22))), MaterialType.glass, MaterialShape.box)
+    w4_h1_wood_box = (tuple(_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22))), MaterialType.wood, MaterialShape.box)
+
+    w4_h4_wood_hollow_box =(tuple(_load_obstacle("1", (761, 0, 84, 84), (761, 84, 84, 84), (845, 0, 84, 84), (845, 84, 84, 84))), MaterialType.wood, MaterialShape.hollow_box)
+
+    w1_h1_stone_circle =(tuple(_load_obstacle("2", (620, 416, 41, 41), (661, 416, 41, 41), (702, 416, 41, 41), (743, 416, 41, 41))), MaterialType.stone, MaterialShape.circle)

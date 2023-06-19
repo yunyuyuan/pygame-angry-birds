@@ -15,17 +15,17 @@ class FixedPolyObject(GameObject):
         self.space = space
 
         self.body = pymunk.Body(body_type=pymunk.Body.STATIC)
-        self.shape = pymunk.Poly(self.body, vertices)
-        self.shape.friction = 0.5
+        self.shapes = pymunk.Poly(self.body, vertices)
+        self.shapes.friction = 0.5
         self.body.position = pos
         self.body.angle = 0
 
-        self.space.add(self.body, self.shape)
+        self.space.add(self.body, self.shapes)
 
     def draw(self):
         ps = [
-            p.rotated(self.shape.body.angle) + self.shape.body.position
-            for p in self.shape.get_vertices()
+            p.rotated(self.shapes.body.angle) + self.shapes.body.position
+            for p in self.shapes.get_vertices()
         ]
         ps = [(round(p.x), round(Game.screen.get_height() - p.y)) for p in ps]
         ps += [ps[0]]

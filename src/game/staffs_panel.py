@@ -3,7 +3,6 @@
 from typing import Any, Callable, List, Optional, Tuple
 
 import pygame
-from src.components.rect import RectSurface
 from src.utils.animation import Animation
 from src.utils.enums import ObstacleTypes
 from src.utils.surface import ContainerSurface, ElementSurface
@@ -11,13 +10,16 @@ from src.utils.vector import Vector
 
 
 class StaffItem(ElementSurface, Animation):
+    StaffSize = (190, 100)
     def __init__(
             self, 
             obstacle_type: ObstacleTypes,
             onclick: Callable[[ObstacleTypes], Any],
+            index: Tuple[float, float],
             *args, **kwargs
         ):
-        super().__init__((191, 100), (6, 6), *args, **kwargs)
+        (width, height) = self.StaffSize
+        super().__init__(size=self.StaffSize, pos=(6+index[0]*width, 6+index[1]*height), *args, **kwargs)
         self.obstacle_type = obstacle_type
         self.img_surface = self.obstacle_type.surfaces[0]
         self.img_size = Vector(self.img_surface.get_size())
@@ -45,8 +47,7 @@ class StaffItem(ElementSurface, Animation):
         pass
     
     def draw(self):
-        self.surface.fill((0, 0, 0, 0))
-        pygame.draw.rect(self.surface, (255, 255, 255, 100) if self.hover else (0, 0, 0, 0), ((0, 0), self.size))
+        self.surface.fill((255, 255, 255, 100) if self.hover else (0, 0, 0, 0))
         self.surface.blit(self.img_surface, (self.img_pos, self.img_size))
         super().draw()
 
@@ -55,10 +56,13 @@ class StaffsPanel(ContainerSurface):
     def __init__(self, start_place: Callable[[ObstacleTypes], Any]):
         super().__init__(size=(400, -120), pos=(5, 5), pos_bottom=True, visible=False)
         self.start_place = start_place
-        self.bg = RectSurface(size=(0, 0), pos=(0, 0), color=pygame.Color(0, 0, 0, 100))
-        self.items: List[StaffItem] = [StaffItem(obstacle_type=ObstacleTypes.g_w4_h1, onclick=self.item_click)]
+        self.items: List[StaffItem] = [
+            StaffItem(obstacle_type=ObstacleTypes.w4_h1_wood_box, onclick=self.item_click, index=(0,0)),
+            StaffItem(obstacle_type=ObstacleTypes.w4_h4_wood_hollow_box, onclick=self.item_click, index=(1,0)),
+            StaffItem(obstacle_type=ObstacleTypes.w1_h1_stone_circle, onclick=self.item_click, index=(0,1)),
+        ]
 
-        self.add_children([self.bg, *self.items])
+        self.add_children([*self.items])
     
     def change_page(self):
         pass
@@ -67,5 +71,5 @@ class StaffsPanel(ContainerSurface):
         self.start_place(item)
     
     def draw(self):
-        self.surface.fill((0, 0, 0, 0))
+        self.surface.fill((0, 0, 0, 100))
         return super().draw()

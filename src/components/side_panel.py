@@ -1,4 +1,5 @@
 
+from typing import Callable, Optional
 import pygame
 from src import Game
 from src.utils.surface import ContainerSurface
@@ -20,3 +21,6 @@ class SidePanel(Animation, ContainerSurface):
         
     def animation_step(self, progress):
         self.pos = [(progress - 1) * self.size[0], self.pos[1]]
+        
+    def draw(self):
+        return super().draw()

@@ -11,7 +11,6 @@ import pygame
 import pymunk
 
 from src.components.button import Button
-from src.components.rect import RectSurface
 from src.utils.enums import ButtonTypes
 from ..utils.surface import ChildType, PageSurface
 
@@ -29,9 +28,8 @@ class GamePage(PageSurface):
 
         # 侧边栏
         self.left_board = SidePanel(width=300, right=True, visible=not self.editing)
-        self.left_board_bg = RectSurface(size=(0, 0), pos=(0, 0), color=pygame.Color(0, 0, 0))
         self.resume_btn = Button(pos=(50, 50), button_type=ButtonTypes.resume)
-        self.left_board.add_children([self.left_board_bg, self.resume_btn])
+        self.left_board.add_children([self.resume_btn])
         
         '''
         editing

@@ -6,7 +6,6 @@ from typing import Callable, List, Optional, Tuple, Union
 import pygame
 import pymunk
 from src import Game
-from src.components.rect import RectSurface
 from src.game.objects import GameObstacleObject
 from src.utils import get_asset_path
 from src.utils.enums import ObstacleTypes
@@ -26,17 +25,15 @@ class GamePanel(ContainerSurface):
         self.config_path = get_asset_path("levels", '1.json')
         with open(self.config_path) as fp:
             self.config = json.load(fp)
+        self.min_scale = Game.geometry[0]/self.config['geometry']['width']
         super().__init__(
-            size=(self.config['geometry']['width'], (Game.geometry[1]-GamePanel.Bottom)*(self.config['geometry']['width']/Game.geometry[0])), 
+            size=(self.config['geometry']['width'], (Game.geometry[1]-GamePanel.Bottom)/self.min_scale), 
             *args, **kwargs
         )
         # 地面
-        ground_line = pymunk.Segment(self.space.static_body, (0,0), (self.config['geometry']['width'],0), 0.0)
+        ground_line = pymunk.Poly(self.space.static_body, [(0,-self.Bottom), (self.config['geometry']['width'],-self.Bottom), (0,0), (self.config['geometry']['width'],0)], None, 0.0)
         ground_line.friction = 0.5
         self.space.add(ground_line)
-        # 背景
-        self.bg = RectSurface(size=(0, 0), pos=(0, 0), color=pygame.Color(180, 120, 160))
-        self.add_children([self.bg])
         # 放置obstacles
         for obstacle in self.config["obstacles"]:
             self.add_obstacle(obstacle['type'], obstacle['angle'], obstacle['pos'])
@@ -171,7 +168,7 @@ class GamePanel(ContainerSurface):
                     self.screen_moving = True
                 # 放大/缩小
                 elif event.button == pygame.BUTTON_WHEELDOWN:
-                    self.scale = max(self.config['geometry']['min-scale'], self.scale - 0.1)
+                    self.scale = max(self.min_scale, self.scale - 0.1)
                 elif event.button == pygame.BUTTON_WHEELUP:
                     self.scale = min(self.scale + 0.1, 1)
         elif event.type == pygame.MOUSEMOTION:
@@ -212,5 +209,5 @@ class GamePanel(ContainerSurface):
             json.dump(new_config, fp, indent=2)
 
     def draw(self):
-        self.surface.fill((0, 0, 0, 0))
+        self.surface.fill((180, 120, 160))
         return super().draw(after_draw_children=self.draw_preview)
