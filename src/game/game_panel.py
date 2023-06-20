@@ -6,9 +6,9 @@ from typing import Callable, List, Optional, Tuple, Union
 import pygame
 import pymunk
 from src import Game
-from src.game.objects import GameObstacleObject
+from src.game.objects import GameFixedObject, GameObstacleObject
 from src.utils import get_asset_path
-from src.utils.enums import ObstacleTypes
+from src.utils.enums import MaterialShape, ObstacleTypes
 from src.utils.surface import ContainerSurface
 from src.utils.vector import Vector
 
@@ -36,7 +36,7 @@ class GamePanel(ContainerSurface):
         self.space.add(ground_line)
         # 放置obstacles
         for obstacle in self.config["obstacles"]:
-            self.add_obstacle(obstacle['type'], obstacle['angle'], obstacle['pos'])
+            self.add_obstacle(type=obstacle['type'], angle=obstacle['angle'], pos=obstacle['pos'])
         '''
         gaming
         '''
@@ -45,8 +45,9 @@ class GamePanel(ContainerSurface):
         editing
         '''
         # 正在放置
-        self.placing_item: Optional[ObstacleTypes] = None
-        self.placing_angle: float = 0
+        self.placing_item: Union[ObstacleTypes, MaterialShape, None] = None
+        self.placing_angle: float
+        self.placing_size: List[int] # fixed的大小
         self.end_place = end_place
         # 正在移除
         self.deleting = False
@@ -75,20 +76,26 @@ class GamePanel(ContainerSurface):
         # 重新计算pos_y
         self.pos = [self.pos[0], (Game.geometry[1]-GamePanel.Bottom)-self.scale*self.size[1]]
     
-    def add_obstacle(self, type, angle, pos):
+    def add_obstacle(self, pos, angle, type):
         self.add_children([GameObstacleObject(
             space=self.space,
-            type=type,
-            angle=angle,
             pos=pos,
+            type=type,
+            angle=angle
         )])
     
     def del_obstacle(self, obstacle: GameObstacleObject):
         obstacle.remove_from_space()
         self.remove_child(obstacle)
 
-    def add_fixed(self):
-        pass
+    def add_fixed(self, pos, angle, type, size):
+        self.add_children([GameFixedObject(
+            space=self.space,
+            size=size,
+            type=type,
+            angle=angle,
+            pos=pos,
+        )])
 
     def add_enemy(self):
         pass
@@ -111,12 +118,18 @@ class GamePanel(ContainerSurface):
     def obstacles(self):
         return [x for x in self.children if isinstance(x, GameObstacleObject)]
 
+    @property
+    def fixed(self):
+        return [x for x in self.children if isinstance(x, GameFixedObject)]
+
     '''
     editing methods
     --------------
     '''   
-    def start_place(self, item: ObstacleTypes):
+    def start_place(self, item: Union[ObstacleTypes, MaterialShape]):
         self.placing_item = item
+        self.placing_angle = 0
+        self.placing_size = [50, 50]
         pygame.mouse.set_visible(False)
 
     def start_delete(self):
@@ -124,7 +137,18 @@ class GamePanel(ContainerSurface):
     
     def draw_preview(self):
         if self.placing_item:
-            rotated_surface = pygame.transform.rotate(self.placing_item.surfaces[0], math.degrees(self.placing_angle))
+            angle = math.degrees(self.placing_angle)
+            if isinstance(self.placing_item, ObstacleTypes):
+                surface = self.placing_item.surfaces[0]
+            else:
+                img_size = self.placing_size
+                surface = pygame.Surface(img_size, flags=pygame.SRCALPHA)
+                if self.placing_item == MaterialShape.box:
+                    pygame.draw.rect(surface, (0, 0, 0), ((0, 0), img_size), width=1)
+                else:
+                    pygame.draw.polygon(surface, (0, 0, 0), [(0,0),(0, img_size[1]-1), (img_size[0],img_size[1]-1),(0,0)], width=1)
+
+            rotated_surface = pygame.transform.rotate(surface, angle)
             offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
             self.surface.blit(rotated_surface, self.relative_mouse - offset)
 
@@ -136,27 +160,46 @@ class GamePanel(ContainerSurface):
         pos = (self.relative_mouse[0], self.size[1] - self.relative_mouse[1])
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.placing_item:
-                # 放置
                 if event.button == pygame.BUTTON_LEFT:
-                    self.add_obstacle(
-                        type=self.placing_item.name,
-                        angle=self.placing_angle,
-                        pos=pos
-                    )
+                    # 放置
+                    if isinstance(self.placing_item, ObstacleTypes):
+                        # 放置障碍物
+                        self.add_obstacle(
+                            pos=pos,
+                            angle=self.placing_angle,
+                            type=self.placing_item.name
+                        )
+                    else:
+                        # 放置fixed
+                        self.add_fixed(
+                            size=tuple(self.placing_size),
+                            angle=self.placing_angle,
+                            type=self.placing_item,
+                            pos=pos
+                        )
                     pygame.mouse.set_visible(True)
-                    self.placing_angle = 0
                     self.placing_item = None
                     self.end_place()
                 elif event.button == pygame.BUTTON_WHEELDOWN:
-                    self.placing_angle += 0.03
+                    if isinstance(self.placing_item, MaterialShape) and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        # 调整fixed长宽
+                        self.placing_size[0 if pygame.key.get_mods() & pygame.KMOD_LCTRL else 1] -= 10
+                    else:
+                        # 旋转
+                        self.placing_angle += 0.03
                 elif event.button == pygame.BUTTON_WHEELUP:
-                    self.placing_angle -= 0.03
+                    if isinstance(self.placing_item, MaterialShape) and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        # 调整fixed长宽
+                        self.placing_size[0 if pygame.key.get_mods() & pygame.KMOD_LCTRL else 1] += 10
+                    else:
+                        # 旋转
+                        self.placing_angle -= 0.03
             elif self.deleting:
                 # 删除
                 if event.button == pygame.BUTTON_LEFT:
-                    for obstacle in self.obstacles:
-                        if obstacle.check_mouse_inside(pos):
-                            self.del_obstacle(obstacle)
+                    for item in [*self.obstacles, *self.fixed]:
+                        if item.check_mouse_inside(pos):
+                            self.del_obstacle(item)
                             self.deleting = False
                             self.end_delete()
                             break
@@ -176,8 +219,8 @@ class GamePanel(ContainerSurface):
                 new_pos = self.pos + event.rel
                 self.pos = [0 if new_pos[0] >= 0 else (Game.geometry[0]-self.size[0]*self.scale if new_pos[0] <= Game.geometry[0]-self.size[0]*self.scale else new_pos[0]), self.pos[1]]
             elif self.deleting:
-                for obstacle in self.obstacles:
-                    if obstacle.check_mouse_inside(pos):
+                for item in [*self.obstacles, *self.fixed]:
+                    if item.check_mouse_inside(pos):
                         break
         elif event.type == pygame.MOUSEBUTTONUP:
             # 发射!

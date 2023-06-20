@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, TYPE_CHECKING, Optional
+from typing import Any, Callable, List, TYPE_CHECKING, Optional, Union
 
 from src import Game
 from src.components.side_panel import SidePanel
@@ -11,7 +11,7 @@ import pygame
 import pymunk
 
 from src.components.button import Button
-from src.utils.enums import ButtonTypes
+from src.utils.enums import ButtonTypes, MaterialShape, ObstacleTypes
 from ..utils.surface import ChildType, PageSurface
 
 

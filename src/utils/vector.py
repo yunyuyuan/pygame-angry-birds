@@ -11,7 +11,7 @@ class Vector(list):
     def __add__(self, other: ArrayTarget):
         if isinstance(other, (int, float)):
             return Vector([x + other for x in self])
-        elif isinstance(other, (list, tuple)):
+        elif isinstance(other, (list, tuple, Vector)):
             if len(other) != len(self):
                 raise ValueError("Vectors must have the same length for element-wise addition.")
             return Vector([x + y for x, y in zip(self, other)])

@@ -95,6 +95,78 @@
         1528.0,
         30.0
       ]
+    },
+    {
+      "type": "w4_h4_wood_hollow_box",
+      "angle": 0,
+      "pos": [
+        980.0,
+        882.0
+      ]
+    },
+    {
+      "type": "w4_h4_wood_hollow_box",
+      "angle": 0,
+      "pos": [
+        1160.0,
+        594.0
+      ]
+    },
+    {
+      "type": "w1_h1_stone_circle",
+      "angle": 0,
+      "pos": [
+        872.0,
+        396.0
+      ]
+    },
+    {
+      "type": "w4_h4_wood_hollow_box",
+      "angle": 0,
+      "pos": [
+        942.0,
+        472.0
+      ]
+    },
+    {
+      "type": "w1_h1_stone_circle",
+      "angle": 0,
+      "pos": [
+        1162.0,
+        594.0
+      ]
+    },
+    {
+      "type": "w1_h1_stone_circle",
+      "angle": 0.08999999999999997,
+      "pos": [
+        1974.0,
+        24.0
+      ]
+    },
+    {
+      "type": "w10_h1_wood_box",
+      "angle": 0,
+      "pos": [
+        1972.0,
+        58.0
+      ]
+    },
+    {
+      "type": "w4_h4_wood_hollow_box",
+      "angle": 0,
+      "pos": [
+        1906.0,
+        110.0
+      ]
+    },
+    {
+      "type": "w4_h4_wood_hollow_box",
+      "angle": 0,
+      "pos": [
+        2032.0,
+        110.0
+      ]
     }
   ],
   "enemies": []

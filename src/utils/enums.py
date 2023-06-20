@@ -28,17 +28,19 @@ class MaterialType(Enum):
     wood = 2
     bird = 3
     stone = 4
+    
 
 class MaterialShape(Enum):
     box = 1
     hollow_box = 2
     circle = 3
+    triangle = 4
 
 
-def _load_obstacle(i: str, *pos: Tuple[int, int, int, int]):
+def _load_obstacle(i: str, size: Tuple[int, int], *pos: Tuple[int, int]):
     img = pygame.image.load(get_asset_path(f"images/INGAME_BLOCKS_{i}.png"))
     for p in pos:
-        yield img.subsurface(pygame.Rect(p))
+        yield img.subsurface(pygame.Rect(p, size))
 
 
 class CollisionTypes(Enum):
@@ -60,8 +62,9 @@ class CollisionTypes(Enum):
 
 
 class ObstacleTypes(CollisionTypes):
-    w4_h1_wood_box = (tuple(_load_obstacle("1", (309, 1017, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22), (394, 1105, 85, 22))), MaterialType.wood, MaterialShape.box)
+    w4_h1_wood_box = (tuple(_load_obstacle("1", (85, 22), (309, 1017), (394, 1105), (394, 1105), (394, 1105))), MaterialType.wood, MaterialShape.box)
+    w10_h1_wood_box = (tuple(_load_obstacle("1", (206, 22), (309, 643), (516, 643), (723, 643), (309, 665))), MaterialType.wood, MaterialShape.box)
 
-    w4_h4_wood_hollow_box =(tuple(_load_obstacle("1", (761, 0, 84, 84), (761, 84, 84, 84), (845, 0, 84, 84), (845, 84, 84, 84))), MaterialType.wood, MaterialShape.hollow_box)
+    w4_h4_wood_hollow_box =(tuple(_load_obstacle("1", (84, 84), (761, 0) , (761, 84), (845, 0), (845, 84))), MaterialType.wood, MaterialShape.hollow_box)
 
-    w1_h1_stone_circle =(tuple(_load_obstacle("2", (620, 416, 41, 41), (661, 416, 41, 41), (702, 416, 41, 41), (743, 416, 41, 41))), MaterialType.stone, MaterialShape.circle)
+    w1_h1_stone_circle =(tuple(_load_obstacle("2", (41, 41), (620, 416), (661, 416), (702, 416), (743, 416))), MaterialType.stone, MaterialShape.circle)
