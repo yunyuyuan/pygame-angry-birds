@@ -121,6 +121,5 @@ class GamePage(PageSurface):
     '''
     
     def draw(self):
-        self.game_panel.pymunk_step()
         self.surface.fill("#13b974")
         return super().draw()

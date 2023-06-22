@@ -4,17 +4,24 @@ from typing import Generator, Tuple
 import pygame
 
 from src.utils import get_asset_path
+from src.utils.img import clip_img
+
+
+def _load_img(i: str, size: Tuple[int, int], *pos: Tuple[int, int]):
+    img = pygame.image.load(get_asset_path(f"images/INGAME_BLOCKS_{i}.png"))
+    for p in pos:
+        yield img.subsurface(pygame.Rect(p, size))
 
 class ButtonTypes(Enum):
-    setting = ((10, 10), (10, 10))
-    pause = ((254, 739), (99, 108))
-    resume = ((902, 294), (71, 80))
-    reset = ((254, 852), (99, 108))
+    setting = clip_img("images/BUTTONS_SHEET_1.png", (10, 10), (10, 10))
+    pause = clip_img("images/BUTTONS_SHEET_1.png", (254, 739), (99, 108))
+    resume = clip_img("images/BUTTONS_SHEET_1.png", (902, 294), (71, 80))
+    reset = clip_img("images/BUTTONS_SHEET_1.png", (254, 852), (99, 108))
 
     # my buttons
-    my_materials = ((13,26), (148, 166))
-    my_preview = ((516,26), (148, 166))
-    my_delete = ((688,26), (148, 166))
+    my_materials = clip_img("images/MY_BUTTONS.png", (13,26), (148, 166))
+    my_preview = clip_img("images/MY_BUTTONS.png", (516,26), (148, 166))
+    my_delete = clip_img("images/MY_BUTTONS.png", (688,26), (148, 166))
 
 
 class BirdTypes(Enum):

@@ -19,7 +19,8 @@ class Button(Animation, ElementSurface):
         max_scale = 0.05,
         *args, **kwargs
     ):
-        self.img_size = Vector(button_type.value[1])
+        self.img = button_type.value
+        self.img_size = Vector(self.img.get_size())
         max_size = self.img_size * (init_scale+max_scale)
         super().__init__(size=max_size, pos=pos, *args, **kwargs)
         self.center_pos = self.size / 2
@@ -27,7 +28,6 @@ class Button(Animation, ElementSurface):
         self.max_scale = max_scale
         self.scale = init_scale
         self.on_click = on_click
-        self.img = clip_img("images/BUTTONS_SHEET_1.png" if not button_type.name.startswith("my_") else "images/MY_BUTTONS.png", *button_type.value)
         
     def mouse_event(self, event: pygame.event.Event) -> bool:
         is_inside = self.check_mouse_inside(event)

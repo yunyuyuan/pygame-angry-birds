@@ -64,7 +64,12 @@ class GamePanel(ContainerSurface):
 
         self.paused = True
         self.scale = self.config['geometry']['initial-scale']
+        # scale动画的方向
+        self.scale_target = 0
         
+    @property
+    def editing(self):
+        return self.parent.editing
     
     @property
     def scale(self):
@@ -72,9 +77,11 @@ class GamePanel(ContainerSurface):
 
     @scale.setter
     def scale(self, v: float):
+        half_geometry = Vector((Game.geometry[0], Game.geometry[1]-self.Bottom))/2
+        new_pos = half_geometry - (half_geometry - self.pos)*v/self._scale
         self._scale = v
-        # 重新计算pos_y
-        self.pos = [self.pos[0], (Game.geometry[1]-GamePanel.Bottom)-self.scale*self.size[1]]
+        # 重新计算pos
+        self.set_valid_pos(new_pos)
     
     def add_obstacle(self, pos, angle, type):
         self.add_children([GameObstacleObject(
@@ -113,6 +120,27 @@ class GamePanel(ContainerSurface):
             self.space.step(0)
         else:
             self.space.step(1.0/Game.fps)
+    
+    def animation_event(self):
+        if self.scale_target != 0:
+            interval = self.scale_target / 5
+            step = interval / 10
+            if self.scale_target > 0:
+                self.scale_target = max(self.scale_target - interval, 0)
+                self.scale = max(self.min_scale, self.scale - step)
+            elif self.scale_target < 0:
+                self.scale_target = min(self.scale_target - interval, 0)
+                self.scale = min(self.scale - step, 1)
+        super().animation_event()
+    
+    # 处理pos的边界情况
+    def set_valid_pos(self, new_pos):
+        min_x = Game.geometry[0]-self.size[0]*self.scale
+        min_y = Game.geometry[1]-self.Bottom-self.size[1]*self.scale
+        self.pos = (
+            0 if new_pos[0] >= 0 else (min_x if new_pos[0] <= min_x else new_pos[0]),
+            0 if new_pos[1] >= 0 else (min_y if new_pos[1] <= min_y else new_pos[1]),
+        )
     
     @property
     def obstacles(self):
@@ -211,13 +239,18 @@ class GamePanel(ContainerSurface):
                     self.screen_moving = True
                 # 放大/缩小
                 elif event.button == pygame.BUTTON_WHEELDOWN:
-                    self.scale = max(self.min_scale, self.scale - 0.1)
+                    if self.scale_target < 0:
+                        self.scale_target = 0
+                    self.scale_target = min(3, self.scale_target + 0.5)
                 elif event.button == pygame.BUTTON_WHEELUP:
-                    self.scale = min(self.scale + 0.1, 1)
+                    if self.scale_target > 0:
+                        self.scale_target = 0
+                    self.scale_target = max(-3, self.scale_target - 0.5)
         elif event.type == pygame.MOUSEMOTION:
             if self.screen_moving:
+                # 拖动屏幕
                 new_pos = self.pos + event.rel
-                self.pos = [0 if new_pos[0] >= 0 else (Game.geometry[0]-self.size[0]*self.scale if new_pos[0] <= Game.geometry[0]-self.size[0]*self.scale else new_pos[0]), self.pos[1]]
+                self.set_valid_pos(new_pos)
             elif self.deleting:
                 for item in [*self.obstacles, *self.fixed]:
                     if item.check_mouse_inside(pos):
@@ -253,4 +286,5 @@ class GamePanel(ContainerSurface):
 
     def draw(self):
         self.surface.fill((180, 120, 160))
+        self.pymunk_step()
         return super().draw(after_draw_children=self.draw_preview)
