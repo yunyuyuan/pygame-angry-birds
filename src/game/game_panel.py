@@ -8,13 +8,14 @@ import pymunk
 from src import Game
 from src.game.objects import GameFixedObject, GameObstacleObject
 from src.utils import get_asset_path
-from src.utils.enums import MaterialShape, ObstacleTypes
+from src.utils.enums import MaterialShape, ObstacleTypes, SpecialItems
 from src.utils.surface import ContainerSurface
 from src.utils.vector import Vector
 
 
 class GamePanel(ContainerSurface):
     Bottom = 100
+    SlingshotRadius = 120
     '''
     编辑/游戏界面通用
     '''
@@ -34,9 +35,11 @@ class GamePanel(ContainerSurface):
         ground_line = pymunk.Poly(self.space.static_body, [(0,-self.Bottom), (self.config['geometry']['width'],-self.Bottom), (0,0), (self.config['geometry']['width'],0)], None, 0.0)
         ground_line.friction = 0.5
         self.space.add(ground_line)
-        # 放置obstacles
+        # 初始化放置obstacles
         for obstacle in self.config["obstacles"]:
             self.add_obstacle(type=obstacle['type'], angle=obstacle['angle'], pos=obstacle['pos'])
+        # 弹弓位置
+        self.slingshot = Vector(self.config['resources']['slingshot'])
         '''
         gaming
         '''
@@ -60,7 +63,7 @@ class GamePanel(ContainerSurface):
         # 正在移动屏幕
         self.screen_moving = False
         # 正在拖拽小鸟
-        self.bird_moving = False
+        self.slingshot_moving = False
 
         self.paused = True
         self.scale = self.config['geometry']['initial-scale']
@@ -163,7 +166,8 @@ class GamePanel(ContainerSurface):
     def start_delete(self):
         self.deleting = not self.deleting
     
-    def draw_preview(self):
+    def after_draw_children(self):
+        # preview
         if self.placing_item:
             angle = math.degrees(self.placing_angle)
             if isinstance(self.placing_item, ObstacleTypes):
@@ -179,6 +183,19 @@ class GamePanel(ContainerSurface):
             rotated_surface = pygame.transform.rotate(surface, angle)
             offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
             self.surface.blit(rotated_surface, self.relative_mouse - offset)
+        # slingshot
+        slingshot = self.relative_mouse if self.slingshot_moving else self.slingshot
+        # back
+        self.surface.blit(SpecialItems.SlingShotBack.value, slingshot+(-8, -30))
+        # backline
+        # bird
+        # frontlint
+        # 垫圈
+        # front
+        self.surface.blit(SpecialItems.SlingShotFront.value, slingshot+(-36, -32))
+        if Game.debug:
+            pygame.draw.circle(self.surface, (255, 0, 0), slingshot, 5)
+            pygame.draw.circle(self.surface, (255, 0, 0), slingshot, self.SlingshotRadius, width=1)
 
     '''
     --------------
@@ -233,10 +250,15 @@ class GamePanel(ContainerSurface):
                             break
             else:
                 if event.button == pygame.BUTTON_LEFT:
-                    # 拖拽小鸟
+                    subtract = self.relative_mouse - self.slingshot
+                    distance = subtract[0]**2 + subtract[1]**2
+                    if distance <= self.SlingshotRadius**2:
+                        # 拖拽弹弓
+                        self.slingshot_moving = True
                     # 释放技能
-                    # 移动屏幕
-                    self.screen_moving = True
+                    else:
+                        # 移动屏幕
+                        self.screen_moving = True
                 # 放大/缩小
                 elif event.button == pygame.BUTTON_WHEELDOWN:
                     if self.scale_target < 0:
@@ -252,13 +274,21 @@ class GamePanel(ContainerSurface):
                 new_pos = self.pos + event.rel
                 self.set_valid_pos(new_pos)
             elif self.deleting:
+                # 删除
                 for item in [*self.obstacles, *self.fixed]:
                     if item.check_mouse_inside(pos):
                         break
+            elif self.slingshot_moving:
+                # 弹弓移动
+                pass
         elif event.type == pygame.MOUSEBUTTONUP:
-            # 发射!
-            # 取消移动屏幕
-            self.screen_moving = False
+            if self.slingshot_moving:
+                # 弹弓移动松开
+                self.slingshot_moving = False
+                self.slingshot = self.relative_mouse
+            elif self.screen_moving:
+                # 取消移动屏幕
+                self.screen_moving = False
         return True
 
     def keyboard_event(self, event: pygame.event.Event) -> bool:
@@ -282,9 +312,10 @@ class GamePanel(ContainerSurface):
                 "angle": obstacle.angle,
                 "pos": obstacle.pos
             }, self.obstacles))
+            new_config["resources"]["slingshot"] = list(self.slingshot)
             json.dump(new_config, fp, indent=2)
 
     def draw(self):
         self.surface.fill((180, 120, 160))
         self.pymunk_step()
-        return super().draw(after_draw_children=self.draw_preview)
+        return super().draw(after_draw_children=self.after_draw_children)
