@@ -6,7 +6,6 @@ from src.utils.enums import ButtonTypes
 from src.utils.vector import Vector
 
 from ..utils.surface import ElementSurface
-from ..utils.img import clip_img
 from .. import Game
 
 class Button(Animation, ElementSurface):

@@ -1,19 +1,21 @@
 from copy import deepcopy
 import json
 import math
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union, TYPE_CHECKING
 
 import pygame
 import pymunk
 from src import Game
 from src.game.objects import GameFixedObject, GameObstacleObject
-from src.utils import get_asset_path
-from src.utils.enums import MaterialShape, ObstacleTypes, SpecialItems
+from src.utils import calculate_intersection, get_asset_path
+from src.utils.enums import BirdTypes, MaterialShape, ObstacleTypes, SpecialItems
 from src.utils.surface import ContainerSurface
 from src.utils.vector import Vector
 
+if TYPE_CHECKING:
+    from src.game import GamePage
 
-class GamePanel(ContainerSurface):
+class GamePanel(ContainerSurface['GamePage']):
     Bottom = 100
     SlingshotRadius = 120
     '''
@@ -26,6 +28,7 @@ class GamePanel(ContainerSurface):
         self.config_path = get_asset_path("levels", '1.json')
         with open(self.config_path) as fp:
             self.config = json.load(fp)
+        self.birds: List[str] = self.config['resources']['birds']
         self.min_scale = Game.geometry[0]/self.config['geometry']['width']
         super().__init__(
             size=(self.config['geometry']['width'], (Game.geometry[1]-GamePanel.Bottom)/self.min_scale), 
@@ -40,6 +43,7 @@ class GamePanel(ContainerSurface):
             self.add_obstacle(type=obstacle['type'], angle=obstacle['angle'], pos=obstacle['pos'])
         # 弹弓位置
         self.slingshot = Vector(self.config['resources']['slingshot'])
+        self.bird_launch_pos: Vector = Vector([0, 0])
         '''
         gaming
         '''
@@ -73,6 +77,14 @@ class GamePanel(ContainerSurface):
     @property
     def editing(self):
         return self.parent.editing
+    
+    @property
+    def playing(self):
+        return not self.editing
+    
+    @property
+    def current_bird(self):
+        return BirdTypes[self.birds[0]]
     
     @property
     def scale(self):
@@ -184,14 +196,16 @@ class GamePanel(ContainerSurface):
             offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
             self.surface.blit(rotated_surface, self.relative_mouse - offset)
         # slingshot
-        slingshot = self.relative_mouse if self.slingshot_moving else self.slingshot
+        slingshot = self.relative_mouse if (self.editing and self.slingshot_moving) else self.slingshot
         # back
         self.surface.blit(SpecialItems.SlingShotBack.value, slingshot+(-8, -30))
-        # backline
-        # bird
-        # frontlint
-        # 垫圈
-        # front
+        if self.playing:
+            # backline
+            # bird
+            self.surface.blit(self.current_bird.surfaces[0], slingshot+self.bird_launch_pos-Vector(self.current_bird.size)/2)
+            # frontlint
+            # 垫圈
+            # front
         self.surface.blit(SpecialItems.SlingShotFront.value, slingshot+(-36, -32))
         if Game.debug:
             pygame.draw.circle(self.surface, (255, 0, 0), slingshot, 5)
@@ -249,12 +263,15 @@ class GamePanel(ContainerSurface):
                             self.end_delete()
                             break
             else:
+            # 编辑/游戏模式下通用
                 if event.button == pygame.BUTTON_LEFT:
                     subtract = self.relative_mouse - self.slingshot
                     distance = subtract[0]**2 + subtract[1]**2
                     if distance <= self.SlingshotRadius**2:
                         # 拖拽弹弓
                         self.slingshot_moving = True
+                        if self.playing:
+                            self.bird_launch_pos = self.relative_mouse - self.slingshot
                     # 释放技能
                     else:
                         # 移动屏幕
@@ -269,23 +286,28 @@ class GamePanel(ContainerSurface):
                         self.scale_target = 0
                     self.scale_target = max(-3, self.scale_target - 0.5)
         elif event.type == pygame.MOUSEMOTION:
-            if self.screen_moving:
-                # 拖动屏幕
-                new_pos = self.pos + event.rel
-                self.set_valid_pos(new_pos)
-            elif self.deleting:
+            if self.deleting:
                 # 删除
                 for item in [*self.obstacles, *self.fixed]:
                     if item.check_mouse_inside(pos):
                         break
+            elif self.screen_moving:
+                # 拖动屏幕
+                new_pos = self.pos + event.rel
+                self.set_valid_pos(new_pos)
             elif self.slingshot_moving:
+                intersection = calculate_intersection(self.slingshot, self.relative_mouse, self.SlingshotRadius)
                 # 弹弓移动
-                pass
+                self.bird_launch_pos = (intersection if intersection else self.relative_mouse) - self.slingshot
         elif event.type == pygame.MOUSEBUTTONUP:
             if self.slingshot_moving:
-                # 弹弓移动松开
                 self.slingshot_moving = False
-                self.slingshot = self.relative_mouse
+                if self.editing:
+                    # 弹弓移动松开
+                    self.slingshot = self.relative_mouse
+                else:
+                    # 发射鸟
+                    pass
             elif self.screen_moving:
                 # 取消移动屏幕
                 self.screen_moving = False

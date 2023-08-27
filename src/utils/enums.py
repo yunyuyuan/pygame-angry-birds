@@ -3,8 +3,7 @@ from typing import Generator, Tuple
 
 import pygame
 
-from src.utils import get_asset_path
-from src.utils.img import clip_img
+from src.utils import get_asset_path, load_subsurfaces, clip_img
 
 
 def _load_img(i: str, size: Tuple[int, int], *pos: Tuple[int, int]):
@@ -24,12 +23,6 @@ class ButtonTypes(Enum):
     my_delete = clip_img("images/MY_BUTTONS.png", (688,26), (148, 166))
 
 
-class BirdTypes(Enum):
-    red = 1,
-    orange = 2,
-    blue = 3,
-
-
 class MaterialType(Enum):
     glass = 1
     wood = 2
@@ -44,19 +37,13 @@ class MaterialShape(Enum):
     triangle = 4
 
 
-def _load_obstacle(i: str, size: Tuple[int, int], *pos: Tuple[int, int]):
-    img = pygame.image.load(get_asset_path(f"images/INGAME_BLOCKS_{i}.png"))
-    for p in pos:
-        yield img.subsurface(pygame.Rect(p, size))
-
-
 class CollisionTypes(Enum):
     @property
     def surfaces(self) -> Tuple[pygame.Surface, pygame.Surface, pygame.Surface, pygame.Surface]:
         return super().value[0]
 
     @property
-    def size(self) -> Tuple[int, int]:
+    def size(self):
         return self.surfaces[0].get_size()
 
     @property
@@ -64,17 +51,22 @@ class CollisionTypes(Enum):
         return super().value[1]
 
     @property
-    def material_shape(self) -> MaterialType:
+    def material_shape(self) -> MaterialShape:
         return super().value[2]
 
 
+class BirdTypes(CollisionTypes):
+    red = (tuple(load_subsurfaces("INGAME_BIRDS_1", (46, 46), (903, 794))), MaterialType.bird, MaterialShape.circle)
+    orange = 2
+    blue = 3
+
 class ObstacleTypes(CollisionTypes):
-    w4_h1_wood_box = (tuple(_load_obstacle("1", (85, 22), (309, 1017), (394, 1105), (394, 1105), (394, 1105))), MaterialType.wood, MaterialShape.box)
-    w10_h1_wood_box = (tuple(_load_obstacle("1", (206, 22), (309, 643), (516, 643), (723, 643), (309, 665))), MaterialType.wood, MaterialShape.box)
+    w4_h1_wood_box = (tuple(load_subsurfaces("INGAME_BLOCKS_1", (85, 22), (309, 1017), (394, 1105), (394, 1105), (394, 1105))), MaterialType.wood, MaterialShape.box)
+    w10_h1_wood_box = (tuple(load_subsurfaces("INGAME_BLOCKS_1", (206, 22), (309, 643), (516, 643), (723, 643), (309, 665))), MaterialType.wood, MaterialShape.box)
 
-    w4_h4_wood_hollow_box =(tuple(_load_obstacle("1", (84, 84), (761, 0) , (761, 84), (845, 0), (845, 84))), MaterialType.wood, MaterialShape.hollow_box)
+    w4_h4_wood_hollow_box =(tuple(load_subsurfaces("INGAME_BLOCKS_1", (84, 84), (761, 0) , (761, 84), (845, 0), (845, 84))), MaterialType.wood, MaterialShape.hollow_box)
 
-    w1_h1_stone_circle =(tuple(_load_obstacle("2", (41, 41), (620, 416), (661, 416), (702, 416), (743, 416))), MaterialType.stone, MaterialShape.circle)
+    w1_h1_stone_circle =(tuple(load_subsurfaces("INGAME_BLOCKS_2", (41, 41), (620, 416), (661, 416), (702, 416), (743, 416))), MaterialType.stone, MaterialShape.circle)
 
 class SpecialItems(Enum):
     SlingShotBack = clip_img("images/INGAME_BIRDS_1.png", (0, 0), (40, 201))

@@ -10,7 +10,7 @@ def start_game():
     clock = pygame.time.Clock()
 
     pygame.time.set_timer(Game.fps_event, Game.fps_frame_sec)
-    Game.active_page = GamePage(editing=True)
+    Game.active_page = GamePage(editing=False)
 
     while Game.running:
         # fill the screen with a color to wipe away anything from last frame

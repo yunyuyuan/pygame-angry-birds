@@ -4,7 +4,7 @@ from src.utils.vector import Vector
 
 import pygame
 
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Generic, List, Optional, Tuple, TypeVar, Union
 
 
 class Drawable():
@@ -15,7 +15,8 @@ class Drawable():
         pass
 
 
-class BaseSurface(Drawable):
+ParentType = TypeVar('ParentType', pygame.Surface, "BaseSurface")
+class BaseSurface(Drawable, Generic[ParentType]):
     '''
     带有鼠标和键盘事件的Drawable
     '''
@@ -23,7 +24,7 @@ class BaseSurface(Drawable):
             self,
             size: Tuple[float, float],
             pos: Tuple[float, float],
-            parent: Optional[Union[pygame.Surface, "BaseSurface"]] = None,
+            parent: Optional[ParentType] = None,
             visible = True,
             flags = pygame.SRCALPHA,
             pos_bottom = False,
@@ -32,9 +33,9 @@ class BaseSurface(Drawable):
         ):
         super().__init__(*args, **kwargs)
         self.origin_size = size
-        self._parent: Union[pygame.Surface, "BaseSurface"]
+        self._parent: ParentType
         self.size: Vector
-        self.parent = Game.screen if parent is None else parent
+        self.parent = Game.screen if parent is None else parent # type: ignore
         self.surface = pygame.Surface(size=self.size, flags=flags)
         self._pos = pos
         self.pos_bottom = pos_bottom
@@ -43,7 +44,7 @@ class BaseSurface(Drawable):
         self._scale: float = 1
 
     @property
-    def parent(self) -> Union[pygame.Surface, "BaseSurface"]:
+    def parent(self) -> ParentType:
         return self._parent
      
     @property
@@ -51,7 +52,7 @@ class BaseSurface(Drawable):
         return (Vector(pygame.mouse.get_pos()) - self.pos)/self._scale
 
     @parent.setter
-    def parent(self, parent: Union[pygame.Surface, "BaseSurface"]):
+    def parent(self, parent: ParentType):
         self._parent = parent
         # 子组件的 size 可能与父组件的 size 相关
         parent_size = parent.get_size() if isinstance(parent, pygame.Surface) else parent.size
@@ -95,7 +96,8 @@ class BaseSurface(Drawable):
 
 
 ChildType = Union["ContainerSurface", "BaseSurface"]
-class ContainerSurface(BaseSurface):
+T = TypeVar('T')
+class ContainerSurface(Generic[T], BaseSurface[T]): # type: ignore
     '''
     * Container没有实体
     * Container拦截鼠标和键盘事件, 依次传给child处理

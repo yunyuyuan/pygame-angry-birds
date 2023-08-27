@@ -23,8 +23,8 @@ class GamePage(PageSurface):
         '''
         gaming
         '''
-        self.pause_btn = Button(pos=(250, 150), button_type=ButtonTypes.pause, visible=not self.editing, on_click=self.pause_game)
-        self.reset_btn = Button(pos=(450, 150), button_type=ButtonTypes.reset, visible=not self.editing)
+        self.pause_btn = Button(pos=(5, 5), button_type=ButtonTypes.pause, init_scale=0.75, visible=not self.editing, on_click=self.pause_game)
+        self.reset_btn = Button(pos=(95, 5), button_type=ButtonTypes.reset, init_scale=0.75, visible=not self.editing)
 
         # 侧边栏
         self.left_board = SidePanel(width=300, right=True, visible=not self.editing)
