@@ -2,7 +2,7 @@ from typing import Union
 
 ArrayTarget = Union[list ,tuple, float, int]
 
-class Vector(list):
+class Vector(list[float]):
     def __init__(self, values):
         if isinstance(values, tuple):
             values = list(values)

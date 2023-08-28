@@ -6,8 +6,8 @@ from typing import Callable, List, Optional, Tuple, Union, TYPE_CHECKING
 import pygame
 import pymunk
 from src import Game
-from src.game.objects import GameFixedObject, GameObstacleObject
-from src.utils import calculate_intersection, get_asset_path
+from src.game.objects import GameBirdObject, GameFixedObject, GameObstacleObject
+from src.utils import calculate_distance, calculate_intersection, get_asset_path, pygame_to_pymunk
 from src.utils.enums import BirdTypes, MaterialShape, ObstacleTypes, SpecialItems
 from src.utils.surface import ContainerSurface
 from src.utils.vector import Vector
@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 class GamePanel(ContainerSurface['GamePage']):
     Bottom = 100
     SlingshotRadius = 120
+    MaxLaunchDistance = SlingshotRadius**2
+    MinLaunchDistance = MaxLaunchDistance/4
     '''
     编辑/游戏界面通用
     '''
@@ -47,6 +49,7 @@ class GamePanel(ContainerSurface['GamePage']):
         '''
         gaming
         '''
+        self.current_fly_bird: Optional[GameBirdObject] = None
 
         '''
         editing
@@ -81,9 +84,9 @@ class GamePanel(ContainerSurface['GamePage']):
     @property
     def playing(self):
         return not self.editing
-    
+
     @property
-    def current_bird(self):
+    def candidate_bird(self):
         return BirdTypes[self.birds[0]]
     
     @property
@@ -202,7 +205,7 @@ class GamePanel(ContainerSurface['GamePage']):
         if self.playing:
             # backline
             # bird
-            self.surface.blit(self.current_bird.surfaces[0], slingshot+self.bird_launch_pos-Vector(self.current_bird.size)/2)
+            self.surface.blit(self.candidate_bird.surfaces[0], slingshot+self.bird_launch_pos-Vector(self.candidate_bird.size)/2)
             # frontlint
             # 垫圈
             # front
@@ -265,9 +268,7 @@ class GamePanel(ContainerSurface['GamePage']):
             else:
             # 编辑/游戏模式下通用
                 if event.button == pygame.BUTTON_LEFT:
-                    subtract = self.relative_mouse - self.slingshot
-                    distance = subtract[0]**2 + subtract[1]**2
-                    if distance <= self.SlingshotRadius**2:
+                    if calculate_distance(self.relative_mouse, self.slingshot) <= self.MaxLaunchDistance:
                         # 拖拽弹弓
                         self.slingshot_moving = True
                         if self.playing:
@@ -307,7 +308,15 @@ class GamePanel(ContainerSurface['GamePage']):
                     self.slingshot = self.relative_mouse
                 else:
                     # 发射鸟
-                    pass
+                    distance = calculate_distance(self.bird_launch_pos, Vector((0, 0)))
+                    if distance >= self.MinLaunchDistance:
+                        self.current_fly_bird = GameBirdObject(
+                            space=self.space,
+                            pos=pos,
+                            bird_type=self.candidate_bird.name
+                        )
+                        self.add_children([self.current_fly_bird])
+                        self.current_fly_bird.launch(pygame_to_pymunk(self.slingshot+self.bird_launch_pos, self.size[1]), self.bird_launch_pos)
             elif self.screen_moving:
                 # 取消移动屏幕
                 self.screen_moving = False

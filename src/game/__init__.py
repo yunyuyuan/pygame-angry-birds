@@ -52,6 +52,9 @@ class GamePage(PageSurface):
         self.add_children([self.game_panel, 
                            self.staff_btn, self.delete_btn, self.preview_btn, self.staffs_panel,
                            self.pause_btn, self.reset_btn, self.left_board])
+        
+        if not self.editing:
+            self.game_panel.toggle_pause()
 
     def common_pause_resume(self):
         '''

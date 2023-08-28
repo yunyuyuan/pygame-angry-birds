@@ -2,8 +2,8 @@ import math
 from typing import List, Sequence, Tuple
 import pygame
 import pymunk
-from src import Game
-from src.utils.enums import CollisionTypes, MaterialShape, ObstacleTypes
+from src import game
+from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, ObstacleTypes
 
 from src.utils.surface import BaseSurface
 from src.utils.vector import Vector
@@ -56,10 +56,10 @@ class GameObject(BaseSurface):
                     ps = [p.rotated(shape.body.angle) + shape.body.position for p in shape.get_vertices()]
                     ps = [(round(p.x), round(self.parent.size[1] - p.y)) for p in ps]
                     ps += [ps[0]]
-                    pygame.draw.lines(self.parent_surface, color, False, ps, 1)
+                    pygame.draw.lines(self.parent_surface, color, False, ps, 2)
                 elif isinstance(shape, pymunk.Circle):
                     p = shape.body.position
-                    pygame.draw.circle(self.parent_surface, color, (round(p.x), round(self.parent.size[1] - p.y)), shape.radius, width=1)
+                    pygame.draw.circle(self.parent_surface, color, (round(p.x), round(self.parent.size[1] - p.y)), shape.radius, width=2)
 
 
 class GameCollisionObject(GameObject):
@@ -80,9 +80,17 @@ class GameCollisionObject(GameObject):
     def collision(self, ke: float):
         pass
 
+
     def draw(self):
-        real_pos = (self.pos[0], self.parent.size[1] - self.pos[1])
-        self.parent_surface.blit(pygame.transform.rotate(self.current_surface, self.angle), (real_pos, self.size))
+        pos = (self.body.position.x, self.parent.size[1] - self.body.position.y)
+
+        angle_degrees = math.degrees(self.body.angle)
+        rotated_surface = pygame.transform.rotate(self.current_surface, angle_degrees)
+
+        offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
+        pos = pos - offset
+
+        self.parent_surface.blit(rotated_surface, (pos.x, pos.y))
 
 
 class GameObstacleObject(GameCollisionObject):
@@ -135,17 +143,6 @@ class GameObstacleObject(GameCollisionObject):
         self.body.velocity = (0,0)
         self.body.angular_velocity = 0
         return super().reload()
-    
-    def draw(self):
-        pos = (self.body.position.x, self.parent.size[1] - self.body.position.y)
-
-        angle_degrees = math.degrees(self.body.angle)
-        rotated_surface = pygame.transform.rotate(self.current_surface, angle_degrees)
-
-        offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
-        pos = pos - offset
-
-        self.parent_surface.blit(rotated_surface, (pos.x, pos.y))
 
 
 class GameFixedObject(GameObject):
@@ -176,8 +173,20 @@ class GameFixedObject(GameObject):
     
 
 class GameBirdObject(GameCollisionObject):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, bird_type: str, *args, **kwargs):
+        super().__init__(collision_type=BirdTypes[bird_type], *args, **kwargs)
+
+        self.bird_radius = self.collision_type.size[0] / 2
+        self.body = pymunk.Body(10, pymunk.moment_for_circle(10, self.bird_radius, self.bird_radius), body_type=pymunk.Body.DYNAMIC)
+        self.shapes = [pymunk.Circle(self.body, self.bird_radius)]
+        self.shapes[0].friction = 1
+        
+        self.add_to_space()
+    
+    def launch(self, position: Tuple[float, float], relative_pos: Vector):
+        self.body.position = position
+        self.body.apply_impulse_at_world_point(pymunk.Vec2d(-relative_pos[0], relative_pos[1]) * 100, self.body.position)
+
 
 # from .fixed_line import FixedLineObject
 # from .fixed_poly import FixedPolyObject

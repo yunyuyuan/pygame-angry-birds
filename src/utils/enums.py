@@ -56,7 +56,7 @@ class CollisionTypes(Enum):
 
 
 class BirdTypes(CollisionTypes):
-    red = (tuple(load_subsurfaces("INGAME_BIRDS_1", (46, 46), (903, 794))), MaterialType.bird, MaterialShape.circle)
+    red = (tuple(load_subsurfaces("INGAME_BIRDS_1", (46, 46), (903, 797))), MaterialType.bird, MaterialShape.circle)
     orange = 2
     blue = 3
 

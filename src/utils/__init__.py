@@ -11,8 +11,8 @@ import math
 def pymunk_to_pygame(v: pymunk.Vec2d):
    return (v.x, Game.screen.get_height() - v.y)
 
-def pygame_to_pymunk(v: pymunk.Vec2d):
-   return (v.x, Game.screen.get_height() - v.y)
+def pygame_to_pymunk(v: Vector, height: float):
+   return (v[0], height - v[1])
 
 def get_asset_path(*path: str):
     return join(dirname(__file__), '..', '..', 'assets', *path)
@@ -32,8 +32,10 @@ def calculate_intersection(p1, p2, r):
         return None  # Points are the same, intersection is the point itself
     
     # Calculate the slope and intercept of the line passing through (a, b) and (c, d)
-    m = (d - b) / (c - a) if c != a else math.inf
-    c_line = b - m * a if m != math.inf else a
+    if c == a:
+        return Vector((a, b+(r if d > b else -r))) if abs(b - d) > r else None 
+    m = (d - b) / (c - a)
+    c_line = b - m * a
     
     # Solve the quadratic equation to find x coordinates of intersection points
     A = 1 + m**2
@@ -51,8 +53,11 @@ def calculate_intersection(p1, p2, r):
     # Calculate corresponding y coordinates
     y1 = m * x1 + c_line if m != math.inf else d
     y2 = m * x2 + c_line if m != math.inf else d
-    
     if a <= x1 <= c or a >= x1 >= c:
         return Vector((x1, y1))
     if a <= x2 <= c or a >= x2 >= c:
         return Vector((x2, y2))
+
+def calculate_distance(p1: Vector, p2: Vector):
+    subtract = p1 - p2
+    return subtract[0]**2 + subtract[1]**2
