@@ -6,6 +6,7 @@ from typing import Callable, List, Optional, Tuple, Union, TYPE_CHECKING
 import pygame
 import pymunk
 from src import Game
+from src.game.bg_panel import BgPanel
 from src.game.objects import GameBirdObject, GameFixedObject, GameObstacleObject
 from src.utils import calculate_distance, calculate_intersection, get_asset_path, pygame_to_pymunk
 from src.utils.enums import BirdTypes, MaterialShape, ObstacleTypes, SpecialItems
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from src.game import GamePage
 
 class GamePanel(ContainerSurface['GamePage']):
-    Bottom = 100
+    Bottom = 300
     SlingshotRadius = 120
     MaxLaunchDistance = SlingshotRadius**2
     MinLaunchDistance = MaxLaunchDistance/4
@@ -33,19 +34,27 @@ class GamePanel(ContainerSurface['GamePage']):
         self.birds: List[str] = self.config['resources']['birds']
         self.min_scale = Game.geometry[0]/self.config['geometry']['width']
         super().__init__(
-            size=(self.config['geometry']['width'], (Game.geometry[1]-GamePanel.Bottom)/self.min_scale), 
+            size=(self.config['geometry']['width'], Game.geometry[1]/self.min_scale), 
             *args, **kwargs
         )
+        '''
+        物理引擎
+        '''
         # 地面
-        ground_line = pymunk.Poly(self.space.static_body, [(0,-self.Bottom), (self.config['geometry']['width'],-self.Bottom), (0,0), (self.config['geometry']['width'],0)], None, 0.0)
+        ground_line = pymunk.Poly(self.space.static_body, [(0,self.Bottom), (self.config['geometry']['width'],self.Bottom), (0,0), (self.config['geometry']['width'],0)], None, 0.0)
         ground_line.friction = 0.5
         self.space.add(ground_line)
         # 初始化放置obstacles
         for obstacle in self.config["obstacles"]:
             self.add_obstacle(type=obstacle['type'], angle=obstacle['angle'], pos=obstacle['pos'])
+        '''
+        UI
+        '''
         # 弹弓位置
         self.slingshot = Vector(self.config['resources']['slingshot'])
         self.bird_launch_pos: Vector = Vector([0, 0])
+        # 背景
+        self.bg_panel = BgPanel(max_width=self.config['geometry']['width'], level=4, pos_y=self.surface.get_height()-self.Bottom)
         '''
         gaming
         '''
@@ -154,7 +163,7 @@ class GamePanel(ContainerSurface['GamePage']):
     # 处理pos的边界情况
     def set_valid_pos(self, new_pos):
         min_x = Game.geometry[0]-self.size[0]*self.scale
-        min_y = Game.geometry[1]-self.Bottom-self.size[1]*self.scale
+        min_y = Game.geometry[1]-self.size[1]*self.scale
         self.pos = (
             0 if new_pos[0] >= 0 else (min_x if new_pos[0] <= min_x else new_pos[0]),
             0 if new_pos[1] >= 0 else (min_y if new_pos[1] <= min_y else new_pos[1]),
@@ -213,6 +222,8 @@ class GamePanel(ContainerSurface['GamePage']):
         if Game.debug:
             pygame.draw.circle(self.surface, (255, 0, 0), slingshot, 5)
             pygame.draw.circle(self.surface, (255, 0, 0), slingshot, self.SlingshotRadius, width=1)
+        # 背景
+        self.bg_panel.after_game_draw(self.surface)
 
     '''
     --------------
@@ -348,5 +359,6 @@ class GamePanel(ContainerSurface['GamePage']):
 
     def draw(self):
         self.surface.fill((180, 120, 160))
+        self.bg_panel.before_game_draw(self.surface)
         self.pymunk_step()
         return super().draw(after_draw_children=self.after_draw_children)

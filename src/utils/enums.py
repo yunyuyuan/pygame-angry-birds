@@ -6,11 +6,6 @@ import pygame
 from src.utils import get_asset_path, load_subsurfaces, clip_img
 
 
-def _load_img(i: str, size: Tuple[int, int], *pos: Tuple[int, int]):
-    img = pygame.image.load(get_asset_path(f"images/INGAME_BLOCKS_{i}.png"))
-    for p in pos:
-        yield img.subsurface(pygame.Rect(p, size))
-
 class ButtonTypes(Enum):
     setting = clip_img("images/BUTTONS_SHEET_1.png", (10, 10), (10, 10))
     pause = clip_img("images/BUTTONS_SHEET_1.png", (254, 739), (99, 108))

@@ -2,7 +2,7 @@ import math
 from typing import List, Sequence, Tuple
 import pygame
 import pymunk
-from src import game
+from src import Game, game
 from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, ObstacleTypes
 
 from src.utils.surface import BaseSurface
@@ -91,6 +91,7 @@ class GameCollisionObject(GameObject):
         pos = pos - offset
 
         self.parent_surface.blit(rotated_surface, (pos.x, pos.y))
+        super().draw()
 
 
 class GameObstacleObject(GameCollisionObject):
