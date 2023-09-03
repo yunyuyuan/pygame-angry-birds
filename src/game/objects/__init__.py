@@ -6,7 +6,6 @@ from src import Game, game
 from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, ObstacleTypes
 
 from src.utils.surface import BaseSurface
-from src.utils.vector import Vector
 
 def poly_box(body: pymunk.Body, pos: Tuple[float, float], size: Tuple[float, float]):
     left_top = pos
@@ -106,8 +105,6 @@ class GameObstacleObject(GameCollisionObject):
             # 实心box
             self.body = pymunk.Body(10, moment=pymunk.moment_for_box(10, self.collision_type.size), body_type=pymunk.Body.DYNAMIC)
             self.shapes = [pymunk.Poly.create_box(self.body, size=self.collision_type.size)]
-            self.body.position = self.pos
-            self.body.angle = self.angle
         elif self.collision_type.material_shape == MaterialShape.hollow_box:
             # 空心box
             self.body = pymunk.Body(10, moment=pymunk.moment_for_box(10, self.collision_type.size), body_type=pymunk.Body.DYNAMIC)
@@ -120,18 +117,17 @@ class GameObstacleObject(GameCollisionObject):
                 poly_box(self.body, pos=(0-half, square_size-small_size-half), size=(square_size, small_size)),
                 poly_box(self.body, pos=(0-half, small_size-half), size=(small_size, square_size-2*small_size)),
             ]
-            self.body.position = self.pos
-            self.body.angle = self.angle
         elif self.collision_type.material_shape == MaterialShape.circle:
             # 实心圆
             radius = self.collision_type.size[0]/2
             self.body = pymunk.Body(10, pymunk.moment_for_circle(10, radius, radius), body_type=pymunk.Body.DYNAMIC)
             self.shapes = [pymunk.Circle(self.body, radius)]
-            self.body.position = self.pos
-            self.body.angle = self.angle
         else:
             raise BaseException("You should handle material: "+self.collision_type.material_shape.name)
         
+        
+        self.body.position = pymunk.Vec2d(self.pos.x, self.pos.y)
+        self.body.angle = self.angle
         for shape in self.shapes:
             shape.friction = 0.5
             shape.collision_type = self.collision_type.material_type.value
@@ -139,7 +135,7 @@ class GameObstacleObject(GameCollisionObject):
         self.add_to_space()
 
     def reload(self):
-        self.body.position = self.pos
+        self.body.position = pymunk.Vec2d(self.pos.x, self.pos.y)
         self.body.angle = self.angle
         self.body.velocity = (0,0)
         self.body.angular_velocity = 0
@@ -150,12 +146,13 @@ class GameFixedObject(GameObject):
     def __init__(self, pos: Tuple[float, float], size: Tuple[float, float], type: MaterialShape, angle: float, *args, **kwargs):
         super().__init__(pos=pos, angle=angle, size=size, *args, **kwargs)
         self.body = pymunk.Body(body_type=pymunk.Body.STATIC)
+        self.type = type
         if type == MaterialShape.box:
             self.shapes = [pymunk.Poly.create_box(self.body, size=size)]
         else:
             half_size = self.size / 2
             self.shapes = [pymunk.Poly(self.body, [(-half_size[0], -half_size[1]), (-half_size[0], half_size[1]),(half_size[0], -half_size[1])])]
-        self.body.position = self.pos
+        self.body.position = pymunk.Vec2d(self.pos.x, self.pos.y)
         self.body.angle = self.angle
 
         self.add_to_space()
@@ -184,7 +181,7 @@ class GameBirdObject(GameCollisionObject):
         
         self.add_to_space()
     
-    def launch(self, position: Tuple[float, float], relative_pos: Vector):
+    def launch(self, position: Tuple[float, float], relative_pos: pygame.Vector2):
         self.body.position = position
         self.body.apply_impulse_at_world_point(pymunk.Vec2d(-relative_pos[0], relative_pos[1]) * 100, self.body.position)
 

@@ -1,6 +1,5 @@
 from src import Game
 from src.utils.animation import Animation
-from src.utils.vector import Vector
 
 import pygame
 
@@ -34,29 +33,25 @@ class BaseSurface(Drawable, Generic[ParentType]):
         super().__init__(*args, **kwargs)
         self.origin_size = size
         self._parent: ParentType
-        self.size: Vector
+        self.size: pygame.Vector2
         self.parent = Game.screen if parent is None else parent # type: ignore
         self.surface = pygame.Surface(size=self.size, flags=flags)
         self._pos = pos
         self.pos_bottom = pos_bottom
         self.pos_right = pos_right
         self.visible = visible
-        self._scale: float = 1
+        self.scale: float = 1
 
     @property
     def parent(self) -> ParentType:
         return self._parent
-     
-    @property
-    def relative_mouse(self):
-        return (Vector(pygame.mouse.get_pos()) - self.pos)/self._scale
 
     @parent.setter
     def parent(self, parent: ParentType):
         self._parent = parent
         # 子组件的 size 可能与父组件的 size 相关
         parent_size = parent.get_size() if isinstance(parent, pygame.Surface) else parent.size
-        self.size = Vector((self.origin_size[0] if self.origin_size[0] > 0 else parent_size[0]+self.origin_size[0], self.origin_size[1] if self.origin_size[1] > 0 else parent_size[1]+self.origin_size[1]))
+        self.size = pygame.Vector2((self.origin_size[0] if self.origin_size[0] > 0 else parent_size[0]+self.origin_size[0], self.origin_size[1] if self.origin_size[1] > 0 else parent_size[1]+self.origin_size[1]))
         if getattr(self, 'surface', None):
             self.surface = pygame.transform.scale(self.surface, self.size)
 
@@ -65,8 +60,8 @@ class BaseSurface(Drawable, Generic[ParentType]):
         return self.parent if isinstance(self.parent, pygame.Surface) else self.parent.surface
 
     @property
-    def pos(self) -> Vector:
-        return Vector((
+    def pos(self) -> pygame.Vector2:
+        return pygame.Vector2((
             self._pos[0] if not self.pos_right else Game.geometry[0]-self._pos[0]-self.size[0],
             self._pos[1] if not self.pos_bottom else Game.geometry[1]-self._pos[1]-self.size[1],
         ))
@@ -74,10 +69,14 @@ class BaseSurface(Drawable, Generic[ParentType]):
     @pos.setter
     def pos(self, pos):
         self._pos = pos
+     
+    @property
+    def relative_mouse(self):
+        return (pygame.Vector2(pygame.mouse.get_pos()) - self.pos)/self.scale
 
     def check_mouse_inside(self, event: pygame.event.Event) -> bool:
-        return 0 <= event.pos[0]-self.pos[0] <= self.size[0]*self._scale and \
-               1 <= event.pos[1]-self.pos[1] <= self.size[1]*self._scale
+        return 0 <= event.pos[0]-self.pos[0] <= self.size[0]*self.scale and \
+               1 <= event.pos[1]-self.pos[1] <= self.size[1]*self.scale
 
     def mouse_event(self, event: pygame.event.Event) -> bool:
         ''' 返回True则说明被拦截，不再继续往下处理 '''
@@ -92,7 +91,15 @@ class BaseSurface(Drawable, Generic[ParentType]):
             self.animate()
 
     def draw(self):
-        self.parent_surface.blit(pygame.transform.scale_by(self.surface, self._scale), (self.pos, self.size))
+        # 只画出在parent_surface内的部分
+        if 'GamePanel' in str(self.__class__):
+            clipped = self.surface.subsurface(-self.pos, Game.geometry / self.scale)
+            scaled = pygame.transform.scale_by(clipped, self.scale)
+            self.parent_surface.blit(scaled, ((0, 0), Game.geometry))
+        else:
+            scaled = pygame.transform.scale_by(self.surface, self.scale)
+            pos = (self.pos, self.size)
+            self.parent_surface.blit(scaled, pos)
 
 
 ChildType = Union["ContainerSurface", "BaseSurface"]
@@ -108,7 +115,7 @@ class ContainerSurface(Generic[T], BaseSurface[T]): # type: ignore
         pos: Tuple[float, float] = (0, 0),
         *args, **kwargs
     ):
-        super().__init__(size=size if size else Game.geometry, pos=pos, *args, **kwargs)
+        super().__init__(size=size if size else tuple(Game.geometry), pos=pos, *args, **kwargs)
         self.children: List[ChildType] = []
 
     @property
@@ -157,7 +164,7 @@ class ContainerSurface(Generic[T], BaseSurface[T]): # type: ignore
         if after_draw_children:
             after_draw_children()
         if Game.debug:
-            pygame.draw.rect(self.parent_surface, (50, 50, 50), (self.pos, Vector(self.surface.get_size())*self._scale), width=1)
+            pygame.draw.rect(self.parent_surface, (50, 50, 50), (self.pos, pygame.Vector2(self.surface.get_size())*self.scale), width=1)
         return super().draw()
 
 

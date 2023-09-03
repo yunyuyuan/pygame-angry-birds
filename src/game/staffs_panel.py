@@ -4,8 +4,6 @@ import pygame
 from src.utils.animation import Animation
 from src.utils.enums import MaterialShape, ObstacleTypes
 from src.utils.surface import ContainerSurface, ElementSurface
-from src.utils.vector import Vector
-
 
 class StaffItem(ElementSurface):
     StaffSize = (190, 100)
@@ -26,7 +24,7 @@ class ObstacleItem(StaffItem):
         super().__init__(index=index, *args, **kwargs)
         self.obstacle_type = obstacle_type
         self.img_surface = pygame.transform.scale_by(self.obstacle_type.surfaces[0], 0.75)
-        self.img_size = Vector(self.img_surface.get_size())
+        self.img_size = pygame.Vector2(self.img_surface.get_size())
         self.img_pos = self.size / 2 - self.img_size / 2
         self.onclick = onclick
         self.hover = False
@@ -56,8 +54,8 @@ class FixedItem(StaffItem):
         ):
         super().__init__(index=index, *args, **kwargs)
         self.shape = shape
-        self.img_surface = pygame.Surface(Vector(self.StaffSize) * 0.75)
-        self.img_size = Vector(self.img_surface.get_size())
+        self.img_surface = pygame.Surface(pygame.Vector2(self.StaffSize) * 0.75)
+        self.img_size = pygame.Vector2(self.img_surface.get_size())
         self.img_pos = self.size / 2 - self.img_size / 2
         self.onclick = onclick
         self.hover = False

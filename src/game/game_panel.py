@@ -10,8 +10,7 @@ from src.game.bg_panel import BgPanel
 from src.game.objects import GameBirdObject, GameFixedObject, GameObstacleObject
 from src.utils import calculate_distance, calculate_intersection, get_asset_path, pygame_to_pymunk
 from src.utils.enums import BirdTypes, MaterialShape, ObstacleTypes, SpecialItems
-from src.utils.surface import ContainerSurface
-from src.utils.vector import Vector
+from src.utils.surface import BaseSurface, ContainerSurface
 
 if TYPE_CHECKING:
     from src.game import GamePage
@@ -47,12 +46,15 @@ class GamePanel(ContainerSurface['GamePage']):
         # 初始化放置obstacles
         for obstacle in self.config["obstacles"]:
             self.add_obstacle(type=obstacle['type'], angle=obstacle['angle'], pos=obstacle['pos'])
+        # 初始化放置fixed
+        for fixed in self.config["fixed"]:
+            self.add_fixed(type=fixed['type'], size=fixed['size'], angle=fixed['angle'], pos=fixed['pos'])
         '''
         UI
         '''
         # 弹弓位置
-        self.slingshot = Vector(self.config['resources']['slingshot'])
-        self.bird_launch_pos: Vector = Vector([0, 0])
+        self.slingshot = pygame.Vector2(self.config['resources']['slingshot'])
+        self.bird_launch_pos: pygame.Vector2 = pygame.Vector2([0, 0])
         # 背景
         self.bg_panel = BgPanel(max_width=self.config['geometry']['width'], level=4, pos_y=self.surface.get_height()-self.Bottom)
         '''
@@ -75,7 +77,7 @@ class GamePanel(ContainerSurface['GamePage']):
         '''
         common
         '''
-        self.moving_start: Vector
+        self.moving_start: pygame.Vector2
         # 正在移动屏幕
         self.screen_moving = False
         # 正在拖拽小鸟
@@ -97,18 +99,6 @@ class GamePanel(ContainerSurface['GamePage']):
     @property
     def candidate_bird(self):
         return BirdTypes[self.birds[0]]
-    
-    @property
-    def scale(self):
-        return self._scale
-
-    @scale.setter
-    def scale(self, v: float):
-        half_geometry = Vector((Game.geometry[0], Game.geometry[1]-self.Bottom))/2
-        new_pos = half_geometry - (half_geometry - self.pos)*v/self._scale
-        self._scale = v
-        # 重新计算pos
-        self.set_valid_pos(new_pos)
     
     def add_obstacle(self, pos, angle, type):
         self.add_children([GameObstacleObject(
@@ -149,6 +139,7 @@ class GamePanel(ContainerSurface['GamePage']):
             self.space.step(1.0/Game.fps)
     
     def animation_event(self):
+        old_scale = self.scale
         if self.scale_target != 0:
             interval = self.scale_target / 5
             step = interval / 10
@@ -158,6 +149,11 @@ class GamePanel(ContainerSurface['GamePage']):
             elif self.scale_target < 0:
                 self.scale_target = min(self.scale_target - interval, 0)
                 self.scale = min(self.scale - step, 1)
+        if self.scale != old_scale:
+            # 中心缩放，理论上应该封装在BaseSurface里的 @scale.setter
+            half_geometry = pygame.Vector2((Game.geometry[0], Game.geometry[1]-self.Bottom))/2
+            new_pos = half_geometry - (half_geometry - self.pos)*self.scale/old_scale
+            self.set_valid_pos(new_pos)
         super().animation_event()
     
     # 处理pos的边界情况
@@ -214,7 +210,7 @@ class GamePanel(ContainerSurface['GamePage']):
         if self.playing:
             # backline
             # bird
-            self.surface.blit(self.candidate_bird.surfaces[0], slingshot+self.bird_launch_pos-Vector(self.candidate_bird.size)/2)
+            self.surface.blit(self.candidate_bird.surfaces[0], slingshot+self.bird_launch_pos-pygame.Vector2(self.candidate_bird.size)/2)
             # frontlint
             # 垫圈
             # front
@@ -319,7 +315,7 @@ class GamePanel(ContainerSurface['GamePage']):
                     self.slingshot = self.relative_mouse
                 else:
                     # 发射鸟
-                    distance = calculate_distance(self.bird_launch_pos, Vector((0, 0)))
+                    distance = calculate_distance(self.bird_launch_pos, pygame.Vector2((0, 0)))
                     if distance >= self.MinLaunchDistance:
                         self.current_fly_bird = GameBirdObject(
                             space=self.space,
@@ -352,8 +348,14 @@ class GamePanel(ContainerSurface['GamePage']):
             new_config['obstacles'] = list(map(lambda obstacle: {
                 "type": obstacle.collision_type.name,
                 "angle": obstacle.angle,
-                "pos": obstacle.pos
+                "pos": tuple(obstacle.pos)
             }, self.obstacles))
+            new_config['fixed'] = list(map(lambda fixed: {
+                "type": fixed.type.name,
+                "angle": fixed.angle,
+                "size": tuple(fixed.size),
+                "pos": tuple(fixed.pos)
+            }, self.fixed))
             new_config["resources"]["slingshot"] = list(self.slingshot)
             json.dump(new_config, fp, indent=2)
 
