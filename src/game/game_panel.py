@@ -148,7 +148,7 @@ class GamePanel(ContainerSurface['GamePage']):
                 self.scale = max(self.min_scale, self.scale - step)
             elif self.scale_target < 0:
                 self.scale_target = min(self.scale_target - interval, 0)
-                self.scale = min(self.scale - step, 1)
+                self.scale = min(self.scale - step, self.config['geometry']['max-scale'])
         if self.scale != old_scale:
             # 中心缩放，理论上应该封装在BaseSurface里的 @scale.setter
             half_geometry = pygame.Vector2((Game.geometry[0], Game.geometry[1]-self.Bottom))/2
@@ -361,6 +361,6 @@ class GamePanel(ContainerSurface['GamePage']):
 
     def draw(self):
         self.surface.fill((180, 120, 160))
-        self.bg_panel.before_game_draw(self.surface)
+        self.bg_panel.before_game_draw(self.surface, self.pos.x)
         self.pymunk_step()
         return super().draw(after_draw_children=self.after_draw_children)

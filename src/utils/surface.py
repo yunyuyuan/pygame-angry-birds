@@ -93,7 +93,7 @@ class BaseSurface(Drawable, Generic[ParentType]):
     def draw(self):
         # 只画出在parent_surface内的部分
         if 'GamePanel' in str(self.__class__):
-            clipped = self.surface.subsurface(-self.pos, Game.geometry / self.scale)
+            clipped = self.surface.subsurface(-self.pos / self.scale, Game.geometry / self.scale)
             scaled = pygame.transform.scale_by(clipped, self.scale)
             self.parent_surface.blit(scaled, ((0, 0), Game.geometry))
         else:

@@ -1,7 +1,8 @@
 {
   "geometry": {
     "width": 3000,
-    "initial-scale": 0.5
+    "initial-scale": 0.5,
+    "max-scale": 1.5
   },
   "resources": {
     "slingshot": [

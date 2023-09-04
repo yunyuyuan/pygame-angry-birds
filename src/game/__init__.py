@@ -23,7 +23,8 @@ class GamePage(PageSurface):
         '''
         gaming
         '''
-        self.pause_btn = Button(pos=(5, 5), button_type=ButtonTypes.pause, init_scale=0.75, visible=not self.editing, on_click=self.pause_game)
+        self.pausing = False
+        self.pause_btn = Button(pos=(5, 5), button_type=ButtonTypes.pause, init_scale=0.75, visible=not self.editing, on_click=self.toggle_pause)
         self.reset_btn = Button(pos=(95, 5), button_type=ButtonTypes.reset, init_scale=0.75, visible=not self.editing)
 
         # 侧边栏
@@ -79,8 +80,10 @@ class GamePage(PageSurface):
     --------------
     '''
     
-    def pause_game(self, event: pygame.event.Event):
-        self.left_board.toggle()    
+    def toggle_pause(self, event: pygame.event.Event):
+        self.left_board.toggle()
+        self.game_panel.toggle_pause(False)
+        self.pausing = not self.pausing
     '''
     --------------
     '''
@@ -101,7 +104,7 @@ class GamePage(PageSurface):
     def toggle_staffs_panel(self, _):
         self.staffs_panel.visible = not self.staffs_panel.visible
 
-    def toggle_preview(self, _):
+    def toggle_preview(self, _ = None):
         self.game_panel.toggle_pause(True)
         self.previewing = not self.previewing
         self.toggle_operating(not self.previewing, [self.preview_btn])
@@ -124,5 +127,4 @@ class GamePage(PageSurface):
     '''
     
     def draw(self):
-        self.surface.fill("#13b974")
         return super().draw()
