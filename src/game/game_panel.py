@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from src.game import GamePage
 
 class GamePanel(ContainerSurface['GamePage']):
-    Bottom = 300
+    PlayingBottom = 100
     SlingshotRadius = 120
     MaxLaunchDistance = SlingshotRadius**2
     MinLaunchDistance = MaxLaunchDistance/4
@@ -32,6 +32,7 @@ class GamePanel(ContainerSurface['GamePage']):
             self.config = json.load(fp)
         self.birds: List[str] = self.config['resources']['birds']
         self.min_scale = Game.geometry[0]/self.config['geometry']['width']
+        self.bottom = self.config['geometry']['bottom']
         super().__init__(
             size=(self.config['geometry']['width'], Game.geometry[1]/self.min_scale), 
             *args, **kwargs
@@ -40,7 +41,7 @@ class GamePanel(ContainerSurface['GamePage']):
         物理引擎
         '''
         # 地面
-        ground_line = pymunk.Poly(self.space.static_body, [(0,self.Bottom), (self.config['geometry']['width'],self.Bottom), (0,0), (self.config['geometry']['width'],0)], None, 0.0)
+        ground_line = pymunk.Poly(self.space.static_body, [(0,self.bottom), (self.config['geometry']['width'],self.bottom), (0,0), (self.config['geometry']['width'],0)], None, 0.0)
         ground_line.friction = 0.5
         self.space.add(ground_line)
         # 初始化放置obstacles
@@ -56,7 +57,7 @@ class GamePanel(ContainerSurface['GamePage']):
         self.slingshot = pygame.Vector2(self.config['resources']['slingshot'])
         self.bird_launch_pos: pygame.Vector2 = pygame.Vector2([0, 0])
         # 背景
-        self.bg_panel = BgPanel(max_width=self.config['geometry']['width'], level=4, pos_y=self.surface.get_height()-self.Bottom)
+        self.bg_panel = BgPanel(max_width=self.config['geometry']['width'], level=4, pos_y=self.surface.get_height()-self.bottom)
         '''
         gaming
         '''
@@ -134,7 +135,7 @@ class GamePanel(ContainerSurface['GamePage']):
     
     def pymunk_step(self):
         if self.paused:
-            self.space.step(0)
+            pass
         else:
             self.space.step(1.0/Game.fps)
     
@@ -149,20 +150,22 @@ class GamePanel(ContainerSurface['GamePage']):
             elif self.scale_target < 0:
                 self.scale_target = min(self.scale_target - interval, 0)
                 self.scale = min(self.scale - step, self.config['geometry']['max-scale'])
-        if self.scale != old_scale:
-            # 中心缩放，理论上应该封装在BaseSurface里的 @scale.setter
-            half_geometry = pygame.Vector2((Game.geometry[0], Game.geometry[1]-self.Bottom))/2
-            new_pos = half_geometry - (half_geometry - self.pos)*self.scale/old_scale
-            self.set_valid_pos(new_pos)
+            if self.scale != old_scale:
+                # 中心缩放，理论上应该封装在BaseSurface里的 @scale.setter
+                half_geometry = pygame.Vector2((Game.geometry[0], Game.geometry[1]-self.bottom))/2
+                new_pos = half_geometry - (half_geometry - self.pos)*self.scale/old_scale
+                self.set_valid_pos(new_pos)
         super().animation_event()
     
     # 处理pos的边界情况
-    def set_valid_pos(self, new_pos):
-        min_x = Game.geometry[0]-self.size[0]*self.scale
-        min_y = Game.geometry[1]-self.size[1]*self.scale
+    def set_valid_pos(self, new_pos: pygame.Vector2):
+        min_x = Game.geometry.x-self.size.x*self.scale
+        min_y = Game.geometry.y-self.size.y*self.scale
         self.pos = (
-            0 if new_pos[0] >= 0 else (min_x if new_pos[0] <= min_x else new_pos[0]),
-            0 if new_pos[1] >= 0 else (min_y if new_pos[1] <= min_y else new_pos[1]),
+            0 if new_pos.x >= 0 else (min_x if new_pos.x <= min_x else new_pos.x),
+            (0 if new_pos.y >= 0 else (min_y if new_pos.y <= min_y else new_pos.y)) 
+                if self.editing 
+                else min(0, min_y+self.bottom*self.scale-self.PlayingBottom),
         )
     
     @property
@@ -301,7 +304,7 @@ class GamePanel(ContainerSurface['GamePage']):
                         break
             elif self.screen_moving:
                 # 拖动屏幕
-                new_pos = self.pos + event.rel
+                new_pos = self.pos + (event.rel[0], event.rel[1] if self.editing else 0)
                 self.set_valid_pos(new_pos)
             elif self.slingshot_moving:
                 intersection = calculate_intersection(self.slingshot, self.relative_mouse, self.SlingshotRadius)

@@ -41,6 +41,7 @@ class BaseSurface(Drawable, Generic[ParentType]):
         self.pos_right = pos_right
         self.visible = visible
         self.scale: float = 1
+        ''' 只会在GamePanel里用 '''
 
     @property
     def parent(self) -> ParentType:
@@ -87,6 +88,7 @@ class BaseSurface(Drawable, Generic[ParentType]):
         return False
     
     def animation_event(self):
+        ''' 如果没有继承Animation，则不会执行该函数 '''
         if isinstance(self, Animation):
             self.animate()
 
@@ -115,7 +117,7 @@ class ContainerSurface(Generic[T], BaseSurface[T]): # type: ignore
         pos: Tuple[float, float] = (0, 0),
         *args, **kwargs
     ):
-        super().__init__(size=size if size else tuple(Game.geometry), pos=pos, *args, **kwargs)
+        super().__init__(size=size if size else (Game.geometry.x, Game.geometry.y), pos=pos, *args, **kwargs)
         self.children: List[ChildType] = []
 
     @property

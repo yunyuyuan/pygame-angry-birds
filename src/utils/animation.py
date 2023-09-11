@@ -22,7 +22,12 @@ class Animation():
         new_progress = self.animation_progress + self.animation_speed*self.animation_state
         if new_progress < 0:
             new_progress = 0
+            self.animate_down()
         elif new_progress > 1:
             new_progress = 1
+            self.animate_down()
         self.animation_progress = new_progress
         self.animation_step(self.animation_progress)
+    
+    def animate_down(self):
+        pass

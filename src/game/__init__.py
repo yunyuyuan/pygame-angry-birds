@@ -28,8 +28,8 @@ class GamePage(PageSurface):
         self.reset_btn = Button(pos=(95, 5), button_type=ButtonTypes.reset, init_scale=0.75, visible=not self.editing)
 
         # 侧边栏
-        self.left_board = SidePanel(width=300, right=True, visible=not self.editing)
-        self.resume_btn = Button(pos=(50, 50), button_type=ButtonTypes.resume)
+        self.left_board = SidePanel(width=300)
+        self.resume_btn = Button(pos=(50, 50), button_type=ButtonTypes.resume, on_click=self.toggle_pause)
         self.left_board.add_children([self.resume_btn])
         
         '''
@@ -55,6 +55,7 @@ class GamePage(PageSurface):
                            self.pause_btn, self.reset_btn, self.left_board])
         
         if not self.editing:
+            self.game_panel.set_valid_pos(pygame.Vector2(0, 0))
             self.game_panel.toggle_pause()
 
     def common_pause_resume(self):
@@ -82,7 +83,7 @@ class GamePage(PageSurface):
     
     def toggle_pause(self, event: pygame.event.Event):
         self.left_board.toggle()
-        self.game_panel.toggle_pause(False)
+        self.game_panel.toggle_pause()
         self.pausing = not self.pausing
     '''
     --------------

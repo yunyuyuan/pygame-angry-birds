@@ -1,6 +1,7 @@
 {
   "geometry": {
     "width": 3000,
+    "bottom": 300,
     "initial-scale": 0.5,
     "max-scale": 1.5
   },
