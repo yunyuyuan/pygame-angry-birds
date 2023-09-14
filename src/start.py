@@ -5,13 +5,10 @@ from src.game import GamePage
 from . import Game
 
 def start_game():
-    # pygame setup
-    pygame.init()
-    Game.screen = pygame.display.set_mode(Game.geometry)
     clock = pygame.time.Clock()
 
     pygame.time.set_timer(Game.fps_event, Game.fps_frame_sec)
-    Game.active_page = GamePage(editing=False)
+    Game.active_page = GamePage(editing=True)
     # Game.active_page = HomePage(level=4)
 
     while Game.running:

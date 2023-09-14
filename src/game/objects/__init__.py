@@ -23,7 +23,6 @@ class GameObject(BaseSurface):
         super().__init__(*args, **kwargs)
         self.space = space
         self.body: pymunk.Body
-        self.parent: BaseSurface
         self.shapes: List[pymunk.Shape]
         self.angle = angle
 
@@ -55,10 +54,10 @@ class GameObject(BaseSurface):
                     ps = [p.rotated(shape.body.angle) + shape.body.position for p in shape.get_vertices()]
                     ps = [(round(p.x), round(self.parent.size[1] - p.y)) for p in ps]
                     ps += [ps[0]]
-                    pygame.draw.lines(self.parent_surface, color, False, ps, 2)
+                    # pygame.draw.lines(self.parent_surface, color, False, ps, 2)
                 elif isinstance(shape, pymunk.Circle):
                     p = shape.body.position
-                    pygame.draw.circle(self.parent_surface, color, (round(p.x), round(self.parent.size[1] - p.y)), shape.radius, width=2)
+                    # pygame.draw.circle(self.parent_surface, color, (round(p.x), round(self.parent.size[1] - p.y)), shape.radius, width=2)
 
 
 class GameCollisionObject(GameObject):
@@ -87,9 +86,9 @@ class GameCollisionObject(GameObject):
         rotated_surface = pygame.transform.rotate(self.current_surface, angle_degrees)
 
         offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
-        pos = pos - offset
+        pos = self.relative_pos + pos - offset
 
-        self.parent_surface.blit(rotated_surface, (pos.x, pos.y))
+        Game.screen.blit(rotated_surface, (pos.x, pos.y))
         super().draw()
 
 
@@ -150,7 +149,7 @@ class GameFixedObject(GameObject):
         if type == MaterialShape.box:
             self.shapes = [pymunk.Poly.create_box(self.body, size=size)]
         else:
-            half_size = self.size / 2
+            half_size = pygame.Vector2(size) / 2
             self.shapes = [pymunk.Poly(self.body, [(-half_size[0], -half_size[1]), (-half_size[0], half_size[1]),(half_size[0], -half_size[1])])]
         self.body.position = pymunk.Vec2d(self.pos.x, self.pos.y)
         self.body.angle = self.angle

@@ -1,6 +1,7 @@
 from typing import Any, Callable, List, Literal, Optional, Tuple, Union
 
 import pygame
+from src import Game
 from src.utils.animation import Animation
 from src.utils.enums import MaterialShape, ObstacleTypes
 from src.utils.surface import ContainerSurface, ElementSurface
@@ -25,7 +26,7 @@ class ObstacleItem(StaffItem):
         self.obstacle_type = obstacle_type
         self.img_surface = pygame.transform.scale_by(self.obstacle_type.surfaces[0], 0.75)
         self.img_size = pygame.Vector2(self.img_surface.get_size())
-        self.img_pos = self.size / 2 - self.img_size / 2
+        self.subtract_offset = (self.size - self.img_size) / 2
         self.onclick = onclick
         self.hover = False
     
@@ -39,10 +40,8 @@ class ObstacleItem(StaffItem):
         return False
 
     def draw(self):
-        self.surface.fill((255, 255, 255, 100) if self.hover else (0, 0, 0, 0))
-        self.surface.blit(self.img_surface, (self.img_pos, self.img_size))
-        super().draw()
-
+        Game.screen.fill((255, 255, 255) if self.hover else (0, 0, 0), (self.relative_pos, self.size))
+        Game.screen.blit(self.img_surface, (self.relative_pos + self.subtract_offset, self.img_size))
 
 class FixedItem(StaffItem):
     def __init__(
@@ -56,7 +55,6 @@ class FixedItem(StaffItem):
         self.shape = shape
         self.img_surface = pygame.Surface(pygame.Vector2(self.StaffSize) * 0.75)
         self.img_size = pygame.Vector2(self.img_surface.get_size())
-        self.img_pos = self.size / 2 - self.img_size / 2
         self.onclick = onclick
         self.hover = False
     
@@ -70,13 +68,13 @@ class FixedItem(StaffItem):
         return False
     
     def draw(self):
-        self.surface.fill((255, 255, 255, 100) if self.hover else (0, 0, 0, 0))
+        # self.surface.fill((255, 255, 255, 100) if self.hover else (0, 0, 0, 0))
         # self.surface.blit(self.img_surface, (self.img_pos, self.img_size))
+        pos = self.relative_pos
         if self.shape == MaterialShape.box:
-            pygame.draw.rect(self.surface, (0, 0, 0), (self.img_pos, self.img_size), width=1)
+            pygame.draw.rect(Game.screen, (0, 0, 0), (pos, self.img_size), width=1)
         elif self.shape == MaterialShape.triangle:
-            pygame.draw.polygon(self.surface, (0, 0, 0), [self.img_pos, self.img_pos+self.img_size,self.img_pos+(0, self.img_size[1])], width=1)
-        super().draw()
+            pygame.draw.polygon(Game.screen, (0, 0, 0), [pos, pos+self.img_size,pos+(0, self.img_size[1])], width=1)
 
 
 
@@ -107,5 +105,5 @@ class StaffsPanel(ContainerSurface):
         self.start_place(item)
     
     def draw(self):
-        self.surface.fill((0, 0, 0, 100))
+        Game.screen.fill('#a3a484', (self.relative_pos, self.size))
         return super().draw()

@@ -17,10 +17,10 @@ def get_asset_path(*path: str):
     return join(dirname(__file__), '..', '..', 'assets', *path)
 
 def clip_img(path: str, pos: Tuple[float, float], size: Tuple[float, float]):
-    return pygame.image.load(get_asset_path(path)).subsurface(pygame.Rect(pos, size))
+    return pygame.image.load(get_asset_path(path)).subsurface(pygame.Rect(pos, size)).convert_alpha()
 
 def load_subsurfaces(img: str, size: Tuple[int, int], *pos: Tuple[int, int]):
-    surface = pygame.image.load(get_asset_path(f"images/{img}.png"))
+    surface = pygame.image.load(get_asset_path(f"images/{img}.png")).convert_alpha()
     for p in pos:
         yield surface.subsurface(pygame.Rect(p, size))
 
