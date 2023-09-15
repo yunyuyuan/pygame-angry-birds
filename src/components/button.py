@@ -1,11 +1,11 @@
 import pygame
 from typing import Tuple, Callable, Any
-from src.utils.animation import Animation
+from ..utils.animation import Animation
 
 from src.utils.enums import ButtonTypes
 
-from src.utils.surface import ElementSurface
-from src import Game
+from ..utils.surface import ElementSurface
+from .. import Game
 
 class Button(Animation, ElementSurface):
     def __init__(
@@ -21,7 +21,7 @@ class Button(Animation, ElementSurface):
         self.img_size = pygame.Vector2(self.img.get_size())
         max_size = self.img_size * (init_scale+max_scale)
         super().__init__(size=max_size, pos=pos, *args, **kwargs)
-        self.center_pos = max_size / 2
+        self.center_pos = self.size / 2
         self.init_scale = init_scale
         self.max_scale = max_scale
         self.btn_scale = init_scale
@@ -46,8 +46,10 @@ class Button(Animation, ElementSurface):
         self.btn_scale = self.init_scale + progress * self.max_scale
     
     def draw(self):
+        self.surface.fill((0, 0, 0, 0))
         new_size = self.img_size * self.btn_scale
-        target_rect = pygame.Rect(self.relative_pos + self.center_pos - new_size / 2, new_size)
-        Game.screen.blit(pygame.transform.scale(self.img, target_rect.size), target_rect)
+        target_rect = pygame.Rect(self.center_pos - new_size / 2, new_size)
+        self.surface.blit(pygame.transform.scale(self.img, target_rect.size), target_rect)
         if Game.debug:
-            pygame.draw.rect(Game.screen, (255, 0, 0), target_rect, width=1)
+            pygame.draw.rect(self.surface, (255, 0, 0), target_rect, width=1)
+        super().draw()

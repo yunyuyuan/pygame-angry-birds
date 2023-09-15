@@ -11,7 +11,7 @@ class Drawable():
         '''
         每个元素都有draw方法
         '''
-        raise NotImplementedError("Need draw() method!")
+        pass
 
 
 ParentType = TypeVar('ParentType', pygame.Surface, "BaseSurface")
@@ -25,6 +25,7 @@ class BaseSurface(Drawable, Generic[ParentType]):
             pos: Tuple[float, float],
             parent: Optional[ParentType] = None,
             visible = True,
+            flags = pygame.SRCALPHA,
             pos_bottom = False,
             pos_right = False,
             *args, **kwargs
@@ -32,27 +33,32 @@ class BaseSurface(Drawable, Generic[ParentType]):
         super().__init__(*args, **kwargs)
         self.origin_size = size
         self._parent: ParentType
-        self.size = pygame.Vector2(size) 
-        if parent:
-            self.parent = parent
+        self.size: pygame.Vector2
+        self.parent = Game.screen if parent is None else parent # type: ignore
+        self.surface = pygame.Surface(size=self.size, flags=flags)
         self._pos = pos
         self.pos_bottom = pos_bottom
         self.pos_right = pos_right
         self.visible = visible
         self.scale: float = 1
+        ''' 只会在GamePanel里用 '''
 
     @property
     def parent(self) -> ParentType:
         return self._parent
 
     @parent.setter
-    def parent(self, parent: Optional[ParentType]):
-        if not parent or (isinstance(parent, BaseSurface) and not hasattr(parent, 'size')):
-            return
+    def parent(self, parent: ParentType):
         self._parent = parent
         # 子组件的 size 可能与父组件的 size 相关
         parent_size = parent.get_size() if isinstance(parent, pygame.Surface) else parent.size
         self.size = pygame.Vector2((self.origin_size[0] if self.origin_size[0] > 0 else parent_size[0]+self.origin_size[0], self.origin_size[1] if self.origin_size[1] > 0 else parent_size[1]+self.origin_size[1]))
+        if getattr(self, 'surface', None):
+            self.surface = pygame.transform.scale(self.surface, self.size)
+
+    @property
+    def parent_surface(self) -> pygame.Surface:
+        return self.parent if isinstance(self.parent, pygame.Surface) else self.parent.surface
 
     @property
     def pos(self) -> pygame.Vector2:
@@ -85,34 +91,22 @@ class BaseSurface(Drawable, Generic[ParentType]):
         ''' 如果没有继承Animation，则不会执行该函数 '''
         if isinstance(self, Animation):
             self.animate()
-    
-    @property
-    def parent_pos(self):
-        return pygame.Vector2(0, 0) if isinstance(self.parent, pygame.Surface) else self.parent.pos
 
-    @property
-    def relative_pos(self):
-        parent = self.parent
-        pos = self.pos
-        while not isinstance(parent, pygame.Surface):
-            pos = pos + parent.pos
-            parent = parent.parent
-        return pos
-
+    def draw(self):
         # 只画出在parent_surface内的部分
-        # if 'GamePanel' in str(self.__class__):
-        #     clipped = self.surface.subsurface(-self.pos / self.scale, Game.geometry / self.scale)
-        #     scaled = pygame.transform.scale_by(clipped, self.scale)
-        #     self.parent_surface.blit(scaled, ((0, 0), Game.geometry))
-        # else:
-        
-            # scaled = pygame.transform.scale_by(self.surface, self.scale)
-            # pos = (self.pos, self.size)
-            # self.parent_surface.blit(scaled, pos)
+        if 'GamePanel' in str(self.__class__):
+            clipped = self.surface.subsurface(-self.pos / self.scale, Game.geometry / self.scale)
+            scaled = pygame.transform.scale_by(clipped, self.scale)
+            self.parent_surface.blit(scaled, ((0, 0), Game.geometry))
+        else:
+            scaled = pygame.transform.scale_by(self.surface, self.scale)
+            pos = (self.pos, self.size)
+            self.parent_surface.blit(scaled, pos)
 
 
 ChildType = Union["ContainerSurface", "BaseSurface"]
-class ContainerSurface(Generic[ParentType], BaseSurface[ParentType]):
+T = TypeVar('T')
+class ContainerSurface(Generic[T], BaseSurface[T]): # type: ignore
     '''
     * Container没有实体
     * Container拦截鼠标和键盘事件, 依次传给child处理
@@ -172,10 +166,11 @@ class ContainerSurface(Generic[ParentType], BaseSurface[ParentType]):
         if after_draw_children:
             after_draw_children()
         if Game.debug:
-            pygame.draw.rect(Game.screen, (50, 50, 50), (self.relative_pos, pygame.Vector2(self.size)), width=1)
+            pygame.draw.rect(self.parent_surface, (50, 50, 50), (self.pos, pygame.Vector2(self.surface.get_size())*self.scale), width=1)
+        return super().draw()
 
 
-class PageSurface(ContainerSurface[pygame.Surface]):
+class PageSurface(ContainerSurface):
     '''
     大页面，目前有三个
     * home

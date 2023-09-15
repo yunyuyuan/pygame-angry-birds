@@ -34,7 +34,7 @@ class GamePanel(ContainerSurface['GamePage']):
         self.min_scale = Game.geometry[0]/self.config['geometry']['width']
         self.bottom = self.config['geometry']['bottom']
         super().__init__(
-            size=(self.config['geometry']['width'], Game.geometry.y/self.min_scale), 
+            size=(self.config['geometry']['width'], Game.geometry[1]/self.min_scale), 
             *args, **kwargs
         )
         '''
@@ -57,7 +57,7 @@ class GamePanel(ContainerSurface['GamePage']):
         self.slingshot = pygame.Vector2(self.config['resources']['slingshot'])
         self.bird_launch_pos: pygame.Vector2 = pygame.Vector2([0, 0])
         # 背景
-        self.bg_panel = BgPanel(max_width=self.config['geometry']['width'], level=4, pos_y=Game.geometry.y/self.min_scale-self.bottom)
+        self.bg_panel = BgPanel(max_width=self.config['geometry']['width'], level=4, pos_y=self.surface.get_height()-self.bottom)
         '''
         gaming
         '''
@@ -184,7 +184,7 @@ class GamePanel(ContainerSurface['GamePage']):
         self.placing_item = item
         self.placing_angle = 0
         self.placing_size = [50, 50]
-        # pygame.mouse.set_visible(False)
+        pygame.mouse.set_visible(False)
 
     def start_delete(self):
         self.deleting = not self.deleting
@@ -205,25 +205,24 @@ class GamePanel(ContainerSurface['GamePage']):
 
             rotated_surface = pygame.transform.rotate(surface, angle)
             offset = pymunk.Vec2d(*rotated_surface.get_size()) / 2
-            Game.screen.blit(rotated_surface, self.parent_pos + self.relative_mouse - offset)
+            self.surface.blit(rotated_surface, self.relative_mouse - offset)
         # slingshot
         slingshot = self.relative_mouse if (self.editing and self.slingshot_moving) else self.slingshot
         # back
-        # self.surface.blit(SpecialItems.SlingShotBack.value, slingshot+(-8, -30))
+        self.surface.blit(SpecialItems.SlingShotBack.value, slingshot+(-8, -30))
         if self.playing:
-            pass
             # backline
             # bird
-            # self.surface.blit(self.candidate_bird.surfaces[0], slingshot+self.bird_launch_pos-pygame.Vector2(self.candidate_bird.size)/2)
+            self.surface.blit(self.candidate_bird.surfaces[0], slingshot+self.bird_launch_pos-pygame.Vector2(self.candidate_bird.size)/2)
             # frontlint
             # 垫圈
             # front
-        Game.screen.blit(SpecialItems.SlingShotFront.value, self.relative_pos + slingshot+(-36, -32))
+        self.surface.blit(SpecialItems.SlingShotFront.value, slingshot+(-36, -32))
         if Game.debug:
-            pygame.draw.circle(Game.screen, (255, 0, 0), self.relative_pos + slingshot, 5)
-            pygame.draw.circle(Game.screen, (255, 0, 0), self.relative_pos + slingshot, self.SlingshotRadius, width=1)
+            pygame.draw.circle(self.surface, (255, 0, 0), slingshot, 5)
+            pygame.draw.circle(self.surface, (255, 0, 0), slingshot, self.SlingshotRadius, width=1)
         # 背景
-        self.bg_panel.after_game_draw()
+        self.bg_panel.after_game_draw(self.surface)
 
     '''
     --------------
@@ -364,7 +363,7 @@ class GamePanel(ContainerSurface['GamePage']):
             json.dump(new_config, fp, indent=2)
 
     def draw(self):
-        # self.surface.fill((180, 120, 160))
-        self.bg_panel.before_game_draw(self.pos.x)
+        self.surface.fill((180, 120, 160))
+        self.bg_panel.before_game_draw(self.surface, self.pos.x)
         self.pymunk_step()
         return super().draw(after_draw_children=self.after_draw_children)
