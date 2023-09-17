@@ -179,6 +179,7 @@ class PageSurface(ContainerSurface):
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(parent=Game.screen, *args, **kwargs)
+        self.surface = Game.screen
 
     def back(self):
         pass

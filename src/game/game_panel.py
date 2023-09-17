@@ -9,7 +9,7 @@ from src import Game
 from src.game.bg_panel import BgPanel
 from src.game.objects import GameBirdObject, GameFixedObject, GameObstacleObject
 from src.utils import calculate_distance, calculate_intersection, get_asset_path, pygame_to_pymunk
-from src.utils.enums import BirdTypes, MaterialShape, ObstacleTypes, SpecialItems
+from src.utils.enums import BirdTypes, MaterialShape, MaterialType, ObstacleTypes, SpecialItems
 from src.utils.surface import BaseSurface, ContainerSurface
 
 if TYPE_CHECKING:
@@ -175,6 +175,16 @@ class GamePanel(ContainerSurface['GamePage']):
     @property
     def fixed(self):
         return [x for x in self.children if isinstance(x, GameFixedObject)]
+    
+    
+    '''
+    gaming methods
+    --------------
+    '''   
+    def collision_handler(self, arbiter: pymunk.Arbiter, space: pymunk.Space, data):
+        # if material == MaterialType.stone:
+        for shape in [x for x in arbiter.shapes if x.collision_type == MaterialType.bird.value]:
+            print(shape)
 
     '''
     editing methods

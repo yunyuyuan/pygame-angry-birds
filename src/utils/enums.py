@@ -21,8 +21,8 @@ class ButtonTypes(Enum):
 class MaterialType(Enum):
     glass = 1
     wood = 2
-    bird = 3
-    stone = 4
+    stone = 3
+    bird = 4
     
 
 class MaterialShape(Enum):

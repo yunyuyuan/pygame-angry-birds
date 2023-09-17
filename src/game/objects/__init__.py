@@ -3,7 +3,7 @@ from typing import List, Sequence, Tuple
 import pygame
 import pymunk
 from src import Game, game
-from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, ObstacleTypes
+from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, MaterialType, ObstacleTypes
 
 from src.utils.surface import BaseSurface
 
@@ -140,6 +140,10 @@ class GameObstacleObject(GameCollisionObject):
         self.body.velocity = (0,0)
         self.body.angular_velocity = 0
         return super().reload()
+    
+    def collision(self, ke: float):
+        print(ke)
+        return super().collision(ke)
 
 
 class GameFixedObject(GameObject):
@@ -178,6 +182,7 @@ class GameBirdObject(GameCollisionObject):
         self.body = pymunk.Body(10, pymunk.moment_for_circle(10, self.bird_radius, self.bird_radius), body_type=pymunk.Body.DYNAMIC)
         self.shapes = [pymunk.Circle(self.body, self.bird_radius)]
         self.shapes[0].friction = 1
+        self.shapes[0].collision_type = self.collision_type.material_type.value
         
         self.add_to_space()
     

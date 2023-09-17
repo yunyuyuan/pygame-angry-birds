@@ -7,15 +7,12 @@ from src.utils.animation import Animation
 
 
 class SidePanel(Animation, ContainerSurface):
-    def __init__(self, width: float, *args, **kwargs):
-        super().__init__(speed=150, size=(Game.geometry.x, Game.geometry.y), pos=(0, 0), *args, **kwargs)
-        self.container_surface = SidePanelContainer(width=width)
-        super().add_children([self.container_surface])
-        self.bg_color: pygame.Color = pygame.Color(0, 0, 0, 0)
+    def __init__(self, width: float, bg_width: float, *args, **kwargs):
+        super().__init__(speed=150, size=(width, Game.geometry.y), pos=(0, 0), *args, **kwargs)
+        self.bg_width = bg_width
         self.visible = False
-    
-    def add_children(self, children: List[ChildType]):
-        self.container_surface.add_children(children)
+        self.mask_surface = pygame.Surface(Game.geometry, pygame.SRCALPHA)
+        self.mask_surface.fill((0, 0, 0, 125))
     
     def toggle(self):
         self.animation_state = -self.animation_state
@@ -23,21 +20,14 @@ class SidePanel(Animation, ContainerSurface):
             self.visible = True
         
     def animation_step(self, progress):
-        self.container_surface.pos = ((progress - 1) * self.container_surface.size.x, self.container_surface.pos[1])
-        self.bg_color.a = int(125 * progress)
+        self.pos = ((progress - 1) * self.size.x, self.pos[1])
     
     def animate_down(self):
         if self.animation_state == -1:
             self.visible = False
 
     def draw(self):
-        self.surface.fill(self.bg_color)
-        return super().draw()
-
-class SidePanelContainer(ContainerSurface):
-    def __init__(self, width: float, *args, **kwargs):
-        super().__init__(size=(width, Game.geometry.y), pos=(-width, 0), *args, **kwargs)
-    
-    def draw(self):
-        self.surface.fill('#298772')
+        Game.screen.blit(self.mask_surface, (0, 0))
+        self.surface.fill('#00000000', ((self.size.x-self.bg_width, 0), (self.bg_width, self.surface.get_height())))
+        self.surface.fill('#298772', ((0, 0), (self.bg_width, self.surface.get_height())))
         return super().draw()

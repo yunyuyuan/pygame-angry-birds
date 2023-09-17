@@ -11,7 +11,7 @@ import pygame
 import pymunk
 
 from src.components.button import Button
-from src.utils.enums import ButtonTypes, MaterialShape, ObstacleTypes
+from src.utils.enums import ButtonTypes, MaterialType
 from ..utils.surface import ChildType, PageSurface
 
 
@@ -28,8 +28,9 @@ class GamePage(PageSurface):
         self.reset_btn = Button(pos=(95, 5), button_type=ButtonTypes.reset, init_scale=0.75, visible=not self.editing)
 
         # 侧边栏
-        self.left_board = SidePanel(width=300)
-        self.resume_btn = Button(pos=(50, 50), button_type=ButtonTypes.resume, on_click=self.toggle_pause)
+        self.left_board = SidePanel(width=300, bg_width=250)
+        self.resume_btn = Button(pos=(215, 0), button_type=ButtonTypes.resume, on_click=self.toggle_pause)
+        self.resume_btn.pos = (self.resume_btn.pos[0], Game.geometry.y/2-self.resume_btn.size.y/2)
         self.left_board.add_children([self.resume_btn])
         
         '''
@@ -57,25 +58,12 @@ class GamePage(PageSurface):
         if not self.editing:
             self.game_panel.set_valid_pos(pygame.Vector2(0, 0))
             self.game_panel.toggle_pause()
+            
+            for material in MaterialType._member_names_:
+                handler = self.game_panel.space.add_wildcard_collision_handler(MaterialType[material].value)
+                handler.post_solve = self.game_panel.collision_handler
 
-    def common_pause_resume(self):
-        '''
-        通用。暂停/继续
-        '''
-        pass
 
-    def common_move_camera(self):
-        '''
-        通用。移动视角
-        '''
-        pass
-
-    def common_scale_camera(self):
-        '''
-        通用。放大缩小
-        '''
-        pass
-    
     '''
     gaming methods
     --------------
