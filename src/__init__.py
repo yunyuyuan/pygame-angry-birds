@@ -4,7 +4,7 @@ import pygame
 from typing import List, TYPE_CHECKING
 if TYPE_CHECKING:
     from src.game.objects import GameBirdObject, GameObstacleObject
-    from src.utils.surface import Page
+    from src.utils.surface import PageSurface
 
 fps = 60.0
 
@@ -17,7 +17,7 @@ class Game(object):
 
     geometry = pygame.Vector2(1200, 700)
     screen: pygame.Surface
-    active_page: "Page"
+    active_page: "PageSurface"
 
     fps_event = pygame.USEREVENT + 1
     

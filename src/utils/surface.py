@@ -14,8 +14,8 @@ class Drawable():
         pass
 
 
-ParentType = TypeVar('ParentType', pygame.Surface, "BaseSurface")
-class BaseSurface(Drawable, Generic[ParentType]):
+ParentType = TypeVar('ParentType', bound=Union[pygame.Surface, "BaseSurface"])
+class BaseSurface(Generic[ParentType], Drawable):
     '''
     带有鼠标和键盘事件的Drawable
     '''
@@ -105,8 +105,7 @@ class BaseSurface(Drawable, Generic[ParentType]):
 
 
 ChildType = Union["ContainerSurface", "BaseSurface"]
-T = TypeVar('T')
-class ContainerSurface(Generic[T], BaseSurface[T]): # type: ignore
+class ContainerSurface(Generic[ParentType], BaseSurface[ParentType]):
     '''
     * Container没有实体
     * Container拦截鼠标和键盘事件, 依次传给child处理
@@ -170,7 +169,7 @@ class ContainerSurface(Generic[T], BaseSurface[T]): # type: ignore
         return super().draw()
 
 
-class PageSurface(ContainerSurface):
+class PageSurface(ContainerSurface[pygame.Surface]):
     '''
     大页面，目前有三个
     * home

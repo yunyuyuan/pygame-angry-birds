@@ -29,6 +29,10 @@ class GameObject(BaseSurface):
 
         # 正在删除，并且鼠标悬停在该物体上，用于高亮
         self.deleting_focus = False
+        
+    @property
+    def id(self):
+        return self.body.id
     
     def add_to_space(self):
         self.space.add(self.body, *self.shapes)

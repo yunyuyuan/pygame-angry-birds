@@ -10,7 +10,7 @@ from src.game.bg_panel import BgPanel
 from src.game.objects import GameBirdObject, GameFixedObject, GameObstacleObject
 from src.utils import calculate_distance, calculate_intersection, get_asset_path, pygame_to_pymunk
 from src.utils.enums import BirdTypes, MaterialShape, MaterialType, ObstacleTypes, SpecialItems
-from src.utils.surface import BaseSurface, ContainerSurface
+from src.utils.surface import ContainerSurface
 
 if TYPE_CHECKING:
     from src.game import GamePage
@@ -183,8 +183,15 @@ class GamePanel(ContainerSurface['GamePage']):
     '''   
     def collision_handler(self, arbiter: pymunk.Arbiter, space: pymunk.Space, data):
         # if material == MaterialType.stone:
-        for shape in [x for x in arbiter.shapes if x.collision_type == MaterialType.bird.value]:
-            print(shape)
+        for shape in [x for x in arbiter.shapes if x.collision_type == MaterialType.wood.value]:
+            if (arbiter.total_ke > 9999999):
+                self.destroy_obstacle(shape.body.id)
+            
+    def destroy_obstacle(self, id: int):
+        for obstacle in self.obstacles:
+            if obstacle.id == id:
+                self.del_obstacle(obstacle)
+                return
 
     '''
     editing methods
