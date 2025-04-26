@@ -23,6 +23,7 @@ class MaterialType(Enum):
     wood = 2
     stone = 3
     bird = 4
+    pig = 5
     
 
 class MaterialShape(Enum):
@@ -62,6 +63,9 @@ class ObstacleTypes(CollisionTypes):
     w4_h4_wood_hollow_box =(tuple(load_subsurfaces("INGAME_BLOCKS_1", (84, 84), (761, 0) , (761, 84), (845, 0), (845, 84))), MaterialType.wood, MaterialShape.hollow_box)
 
     w1_h1_stone_circle =(tuple(load_subsurfaces("INGAME_BLOCKS_2", (41, 41), (620, 416), (661, 416), (702, 416), (743, 416))), MaterialType.stone, MaterialShape.circle)
+
+class PigTypes(CollisionTypes):
+    normal_pig = (tuple(load_subsurfaces("INGAME_BIRDS_1", (99, 99), (297, 355), (297, 454), (297, 553), (297, 652))), MaterialType.pig, MaterialShape.circle)
 
 class SpecialItems(Enum):
     SlingShotBack = clip_img("images/INGAME_BIRDS_1.png", (0, 0), (40, 201))

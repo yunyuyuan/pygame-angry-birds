@@ -3,7 +3,7 @@ from typing import List, Sequence, Tuple
 import pygame
 import pymunk
 from src import Game, game
-from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, MaterialType, ObstacleTypes
+from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, MaterialType, ObstacleTypes, PigTypes
 
 from src.utils.surface import BaseSurface
 
@@ -150,12 +150,49 @@ class GameObstacleObject(GameCollisionObject):
         return super().collision(ke)
 
 
+class GamePigObject(GameCollisionObject):
+    def __init__(self, pos: Tuple[float, float], type: str, angle: float, *args, **kwargs):
+        super().__init__(
+            pos=pos,
+            collision_type=PigTypes[type],
+            angle=angle,
+            *args, **kwargs
+        )
+        if self.collision_type.material_shape == MaterialShape.circle:
+            # 实心圆
+            radius = self.collision_type.size[0]/2
+            self.body = pymunk.Body(10, pymunk.moment_for_circle(10, radius, radius), body_type=pymunk.Body.DYNAMIC)
+            self.shapes = [pymunk.Circle(self.body, radius)]
+        else:
+            raise BaseException("You should handle material: "+self.collision_type.material_shape.name)
+        
+        
+        self.body.position = pymunk.Vec2d(self.pos.x, self.pos.y)
+        self.body.angle = self.angle
+        for shape in self.shapes:
+            shape.friction = 0.5
+            shape.collision_type = self.collision_type.material_type.value
+
+        self.add_to_space()
+
+    def reload(self):
+        self.body.position = pymunk.Vec2d(self.pos.x, self.pos.y)
+        self.body.angle = self.angle
+        self.body.velocity = (0,0)
+        self.body.angular_velocity = 0
+        return super().reload()
+    
+    def collision(self, ke: float):
+        print(ke)
+        return super().collision(ke)
+
+
 class GameFixedObject(GameObject):
-    def __init__(self, pos: Tuple[float, float], size: Tuple[float, float], type: MaterialShape, angle: float, *args, **kwargs):
+    def __init__(self, pos: Tuple[float, float], size: Tuple[float, float], type: str, angle: float, *args, **kwargs):
         super().__init__(pos=pos, angle=angle, size=size, *args, **kwargs)
         self.body = pymunk.Body(body_type=pymunk.Body.STATIC)
-        self.type = type
-        if type == MaterialShape.box:
+        self.type = MaterialShape[type]
+        if self.type == MaterialShape.box:
             self.shapes = [pymunk.Poly.create_box(self.body, size=size)]
         else:
             half_size = self.size / 2

@@ -37,11 +37,11 @@ class GamePage(PageSurface):
         editing
         '''
         self.previewing = False
-        # 添加物料
+        # 添加物料按钮
         self.staff_btn = Button(pos=(5, 5), button_type=ButtonTypes.my_materials, init_scale=0.6, visible=self.editing, on_click=self.toggle_staffs_panel)
-        # 删除物料
+        # 删除物料按钮
         self.delete_btn = Button(pos=(125, 5), button_type=ButtonTypes.my_delete, init_scale=0.6, visible=self.editing, on_click=self.start_delete)        
-        # 切换预览模式
+        # 切换预览模式按钮
         self.preview_btn = Button(pos=(245, 5), button_type=ButtonTypes.my_preview, init_scale=0.6, visible=self.editing, on_click=self.toggle_preview)        
         # 物品栏
         self.staffs_panel = StaffsPanel(start_place=self.start_place)

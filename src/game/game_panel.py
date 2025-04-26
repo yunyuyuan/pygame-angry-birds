@@ -7,9 +7,9 @@ import pygame
 import pymunk
 from src import Game
 from src.game.bg_panel import BgPanel
-from src.game.objects import GameBirdObject, GameFixedObject, GameObstacleObject
+from src.game.objects import GameBirdObject, GameFixedObject, GameObstacleObject, GamePigObject
 from src.utils import calculate_distance, calculate_intersection, get_asset_path, pygame_to_pymunk
-from src.utils.enums import BirdTypes, MaterialShape, MaterialType, ObstacleTypes, SpecialItems
+from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, MaterialType, ObstacleTypes, PigTypes, SpecialItems
 from src.utils.surface import ContainerSurface
 
 if TYPE_CHECKING:
@@ -47,6 +47,8 @@ class GamePanel(ContainerSurface['GamePage']):
         # 初始化放置obstacles
         for obstacle in self.config["obstacles"]:
             self.add_obstacle(type=obstacle['type'], angle=obstacle['angle'], pos=obstacle['pos'])
+        for pig in self.config["pigs"]:
+            self.add_pig(type=pig['type'], angle=pig['angle'], pos=pig['pos'])
         # 初始化放置fixed
         for fixed in self.config["fixed"]:
             self.add_fixed(type=fixed['type'], size=fixed['size'], angle=fixed['angle'], pos=fixed['pos'])
@@ -113,6 +115,18 @@ class GamePanel(ContainerSurface['GamePage']):
         obstacle.remove_from_space()
         self.remove_child(obstacle)
 
+    def add_pig(self, pos, angle, type):
+        self.add_children([GamePigObject(
+            space=self.space,
+            pos=pos,
+            type=type,
+            angle=angle
+        )])
+    
+    def del_pig(self, pig: GamePigObject):
+        pig.remove_from_space()
+        self.remove_child(pig)
+
     def add_fixed(self, pos, angle, type, size):
         self.add_children([GameFixedObject(
             space=self.space,
@@ -173,6 +187,10 @@ class GamePanel(ContainerSurface['GamePage']):
         return [x for x in self.children if isinstance(x, GameObstacleObject)]
 
     @property
+    def pigs(self):
+        return [x for x in self.children if isinstance(x, GamePigObject)]
+
+    @property
     def fixed(self):
         return [x for x in self.children if isinstance(x, GameFixedObject)]
     
@@ -186,13 +204,22 @@ class GamePanel(ContainerSurface['GamePage']):
         for shape in [x for x in arbiter.shapes if x.collision_type == MaterialType.wood.value]:
             if (arbiter.total_ke > 9999999):
                 self.destroy_obstacle(shape.body.id)
-            
+
+        for shape in [x for x in arbiter.shapes if x.collision_type == MaterialType.pig.value]:
+            if (arbiter.total_ke > 9999999):
+                self.destroy_pig(shape.body.id)
+
     def destroy_obstacle(self, id: int):
         for obstacle in self.obstacles:
             if obstacle.id == id:
                 self.del_obstacle(obstacle)
                 return
 
+    def destroy_pig(self, id: int):
+        for pig in self.pigs:
+            if pig.id == id:
+                self.del_pig(pig)
+                return
     '''
     editing methods
     --------------
@@ -210,7 +237,7 @@ class GamePanel(ContainerSurface['GamePage']):
         # preview
         if self.placing_item:
             angle = math.degrees(self.placing_angle)
-            if isinstance(self.placing_item, ObstacleTypes):
+            if isinstance(self.placing_item, CollisionTypes):
                 surface = self.placing_item.surfaces[0]
             else:
                 img_size = self.placing_size
@@ -258,12 +285,19 @@ class GamePanel(ContainerSurface['GamePage']):
                             angle=self.placing_angle,
                             type=self.placing_item.name
                         )
+                    elif isinstance(self.placing_item, PigTypes):
+                        # 放置猪
+                        self.add_pig(
+                            pos=pos,
+                            angle=self.placing_angle,
+                            type=self.placing_item.name
+                        )
                     else:
                         # 放置fixed
                         self.add_fixed(
                             size=tuple(self.placing_size),
                             angle=self.placing_angle,
-                            type=self.placing_item,
+                            type=self.placing_item.name,
                             pos=pos
                         )
                     pygame.mouse.set_visible(True)
@@ -370,6 +404,11 @@ class GamePanel(ContainerSurface['GamePage']):
                 "angle": obstacle.angle,
                 "pos": tuple(obstacle.pos)
             }, self.obstacles))
+            new_config['pigs'] = list(map(lambda pig: {
+                "type": pig.collision_type.name,
+                "angle": pig.angle,
+                "pos": tuple(pig.pos)
+            }, self.pigs))
             new_config['fixed'] = list(map(lambda fixed: {
                 "type": fixed.type.name,
                 "angle": fixed.angle,

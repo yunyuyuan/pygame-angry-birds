@@ -41,15 +41,17 @@
       ]
     }
   ],
-  "obstacles": [
+  "pigs": [
     {
-      "type": "w4_h1_wood_box",
-      "angle": 90,
+      "type": "normal_pig",
+      "angle": 0,
       "pos": [
-        500.0,
-        100.0
+        416.0,
+        440.0
       ]
-    },
+    }
+  ],
+  "obstacles": [
     {
       "type": "w4_h1_wood_box",
       "angle": 0,
@@ -86,22 +88,6 @@
       "type": "w4_h1_wood_box",
       "angle": 0,
       "pos": [
-        1196.0,
-        170.0
-      ]
-    },
-    {
-      "type": "w4_h1_wood_box",
-      "angle": -0.4800000000000002,
-      "pos": [
-        872.0,
-        42.0
-      ]
-    },
-    {
-      "type": "w4_h1_wood_box",
-      "angle": 0,
-      "pos": [
         286.0,
         984.0
       ]
@@ -112,14 +98,6 @@
       "pos": [
         1896.0,
         750.0
-      ]
-    },
-    {
-      "type": "w4_h1_wood_box",
-      "angle": 0,
-      "pos": [
-        1528.0,
-        30.0
       ]
     },
     {
@@ -160,38 +138,6 @@
       "pos": [
         1162.0,
         594.0
-      ]
-    },
-    {
-      "type": "w1_h1_stone_circle",
-      "angle": 0.08999999999999997,
-      "pos": [
-        1974.0,
-        24.0
-      ]
-    },
-    {
-      "type": "w10_h1_wood_box",
-      "angle": 0,
-      "pos": [
-        1972.0,
-        58.0
-      ]
-    },
-    {
-      "type": "w4_h4_wood_hollow_box",
-      "angle": 0,
-      "pos": [
-        1906.0,
-        110.0
-      ]
-    },
-    {
-      "type": "w4_h4_wood_hollow_box",
-      "angle": 0,
-      "pos": [
-        2032.0,
-        110.0
       ]
     }
   ],
