@@ -12,6 +12,7 @@ def start_game():
 
     pygame.time.set_timer(Game.fps_event, Game.fps_frame_sec)
     Game.active_page = GamePage(editing=False)
+    # Game.active_page = GamePage(editing=True)
     # Game.active_page = HomePage(level=4)
 
     while Game.running:

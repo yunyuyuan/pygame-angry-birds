@@ -28,7 +28,7 @@ class GameObject(BaseSurface):
         self.angle = angle
 
         # 正在删除，并且鼠标悬停在该物体上，用于高亮
-        self.deleting_focus = False
+        self.focus = False
         
     @property
     def id(self):
@@ -45,15 +45,15 @@ class GameObject(BaseSurface):
 
     def check_mouse_inside(self, pos: Tuple[float, float]):
         for shape in self.shapes:
-            self.deleting_focus = shape.point_query(pos).distance <= 0
+            self.focus = shape.point_query(pos).distance <= 0
             # 只要有一个shape在鼠标内，则可以return
-            if self.deleting_focus:
+            if self.focus:
                 return True
         return False
 
     def draw(self):
-        if Game.debug or self.deleting_focus:
-            color = pygame.Color("red") if self.deleting_focus else pygame.Color("black")
+        if Game.debug or self.focus:
+            color = pygame.Color("red") if self.focus else pygame.Color("black")
             for shape in self.shapes:
                 if isinstance(shape, pymunk.Poly):
                     ps = [p.rotated(shape.body.angle) + shape.body.position for p in shape.get_vertices()]
@@ -146,7 +146,6 @@ class GameObstacleObject(GameCollisionObject):
         return super().reload()
     
     def collision(self, ke: float):
-        print(ke)
         return super().collision(ke)
 
 
@@ -183,7 +182,6 @@ class GamePigObject(GameCollisionObject):
         return super().reload()
     
     def collision(self, ke: float):
-        print(ke)
         return super().collision(ke)
 
 

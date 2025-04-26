@@ -7,7 +7,7 @@ import pygame
 import pymunk
 from src import Game
 from src.game.bg_panel import BgPanel
-from src.game.objects import GameBirdObject, GameFixedObject, GameObstacleObject, GamePigObject
+from src.game.objects import GameBirdObject, GameCollisionObject, GameFixedObject, GameObject, GameObstacleObject, GamePigObject
 from src.utils import calculate_distance, calculate_intersection, get_asset_path, pygame_to_pymunk
 from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, MaterialType, ObstacleTypes, PigTypes, SpecialItems
 from src.utils.surface import ContainerSurface
@@ -69,7 +69,7 @@ class GamePanel(ContainerSurface['GamePage']):
         editing
         '''
         # 正在放置
-        self.placing_item: Union[ObstacleTypes, MaterialShape, None] = None
+        self.placing_item: Union[CollisionTypes, MaterialShape, None] = None
         self.placing_angle: float
         self.placing_size: List[int] # fixed的大小
         self.end_place = end_place
@@ -110,10 +110,6 @@ class GamePanel(ContainerSurface['GamePage']):
             type=type,
             angle=angle
         )])
-    
-    def del_obstacle(self, obstacle: GameObstacleObject):
-        obstacle.remove_from_space()
-        self.remove_child(obstacle)
 
     def add_pig(self, pos, angle, type):
         self.add_children([GamePigObject(
@@ -122,10 +118,6 @@ class GamePanel(ContainerSurface['GamePage']):
             type=type,
             angle=angle
         )])
-    
-    def del_pig(self, pig: GamePigObject):
-        pig.remove_from_space()
-        self.remove_child(pig)
 
     def add_fixed(self, pos, angle, type, size):
         self.add_children([GameFixedObject(
@@ -135,6 +127,11 @@ class GamePanel(ContainerSurface['GamePage']):
             angle=angle,
             pos=pos,
         )])
+
+    
+    def del_item(self, item: GameObject):
+        item.remove_from_space()
+        self.remove_child(item)
 
     def add_enemy(self):
         pass
@@ -194,6 +191,14 @@ class GamePanel(ContainerSurface['GamePage']):
     def fixed(self):
         return [x for x in self.children if isinstance(x, GameFixedObject)]
     
+    @property
+    def all_collision_items(self):
+        return [x for x in self.children if isinstance(x, GameCollisionObject)]
+    
+    @property
+    def all_editing_items(self):
+        return [x for x in self.children if isinstance(x, GameObject)]
+    
     
     '''
     gaming methods
@@ -203,28 +208,23 @@ class GamePanel(ContainerSurface['GamePage']):
         # if material == MaterialType.stone:
         for shape in [x for x in arbiter.shapes if x.collision_type == MaterialType.wood.value]:
             if (arbiter.total_ke > 9999999):
-                self.destroy_obstacle(shape.body.id)
+                self.destroy_collision_item(shape.body.id)
 
         for shape in [x for x in arbiter.shapes if x.collision_type == MaterialType.pig.value]:
             if (arbiter.total_ke > 9999999):
-                self.destroy_pig(shape.body.id)
+                self.destroy_collision_item(shape.body.id)
 
-    def destroy_obstacle(self, id: int):
-        for obstacle in self.obstacles:
-            if obstacle.id == id:
-                self.del_obstacle(obstacle)
+    def destroy_collision_item(self, id: int):
+        for item in self.all_collision_items:
+            if item.id == id:
+                self.del_item(item)
                 return
 
-    def destroy_pig(self, id: int):
-        for pig in self.pigs:
-            if pig.id == id:
-                self.del_pig(pig)
-                return
     '''
     editing methods
     --------------
     '''   
-    def start_place(self, item: Union[ObstacleTypes, MaterialShape]):
+    def start_place(self, item: Union[CollisionTypes, MaterialShape]):
         self.placing_item = item
         self.placing_angle = 0
         self.placing_size = [50, 50]
@@ -277,7 +277,7 @@ class GamePanel(ContainerSurface['GamePage']):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.placing_item:
                 if event.button == pygame.BUTTON_LEFT:
-                    # 放置
+                    # 编辑-放置
                     if isinstance(self.placing_item, ObstacleTypes):
                         # 放置障碍物
                         self.add_obstacle(
@@ -318,26 +318,39 @@ class GamePanel(ContainerSurface['GamePage']):
                         # 旋转
                         self.placing_angle -= 0.03
             elif self.deleting:
-                # 删除
+                # 编辑-删除
                 if event.button == pygame.BUTTON_LEFT:
-                    for item in [*self.obstacles, *self.fixed]:
+                    for item in self.all_editing_items:
                         if item.check_mouse_inside(pos):
-                            self.del_obstacle(item)
+                            self.del_item(item)
                             self.deleting = False
                             self.end_delete()
                             break
             else:
-            # 编辑/游戏模式下通用
+                # 编辑-移动
                 if event.button == pygame.BUTTON_LEFT:
-                    if calculate_distance(self.relative_mouse, self.slingshot) <= self.MaxLaunchDistance:
-                        # 拖拽弹弓
-                        self.slingshot_moving = True
-                        if self.playing:
-                            self.bird_launch_pos = self.relative_mouse - self.slingshot
-                    # 释放技能
-                    else:
-                        # 移动屏幕
-                        self.screen_moving = True
+                    item_moving = False
+                    for item in self.all_editing_items:
+                        if item.check_mouse_inside(pos):
+                            # 先删除
+                            self.del_item(item)
+                            print(item)
+                            if isinstance(item, GameCollisionObject):
+                                self.start_place(item.collision_type)
+                            elif isinstance(item, GameFixedObject):
+                                self.start_place(item.type)
+                            item_moving = True
+                            break
+                    if not item_moving:
+                        if calculate_distance(self.relative_mouse, self.slingshot) <= self.MaxLaunchDistance:
+                            # 拖拽弹弓
+                            self.slingshot_moving = True
+                            if self.playing:
+                                self.bird_launch_pos = self.relative_mouse - self.slingshot
+                        # 释放技能
+                        else:
+                            # 移动屏幕
+                            self.screen_moving = True
                 # 放大/缩小
                 elif event.button == pygame.BUTTON_WHEELDOWN:
                     if self.scale_target < 0:
@@ -348,12 +361,12 @@ class GamePanel(ContainerSurface['GamePage']):
                         self.scale_target = 0
                     self.scale_target = max(-3, self.scale_target - 0.5)
         elif event.type == pygame.MOUSEMOTION:
-            if self.deleting:
-                # 删除
-                for item in [*self.obstacles, *self.fixed]:
+            if self.editing:
+                # 高亮
+                for item in self.all_editing_items:
                     if item.check_mouse_inside(pos):
                         break
-            elif self.screen_moving:
+            if self.screen_moving:
                 # 拖动屏幕
                 new_pos = self.pos + (event.rel[0], event.rel[1] if self.editing else 0)
                 self.set_valid_pos(new_pos)

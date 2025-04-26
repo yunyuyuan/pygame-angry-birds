@@ -58,7 +58,12 @@ class BirdTypes(CollisionTypes):
 
 class ObstacleTypes(CollisionTypes):
     w4_h1_wood_box = (tuple(load_subsurfaces("INGAME_BLOCKS_1", (85, 22), (309, 1017), (394, 1105), (394, 1105), (394, 1105))), MaterialType.wood, MaterialShape.box)
+    w4_h1_glass_box = (tuple(load_subsurfaces("INGAME_BLOCKS_1", (85, 22), (394, 1017), (309, 1061), (394, 1105), (309, 1127))), MaterialType.wood, MaterialShape.box)
+    w4_h1_stone_box = (tuple(load_subsurfaces("INGAME_BLOCKS_1", (85, 22), (394, 1127), (394, 1105), (309, 1105), (309, 1105))), MaterialType.stone, MaterialShape.box)
+
     w10_h1_wood_box = (tuple(load_subsurfaces("INGAME_BLOCKS_1", (206, 22), (309, 643), (516, 643), (723, 643), (309, 665))), MaterialType.wood, MaterialShape.box)
+    w10_h1_glass_box = (tuple(load_subsurfaces("INGAME_BLOCKS_1", (206, 22), (516, 665), (723, 665), (309, 687), (516, 687))), MaterialType.glass, MaterialShape.box)
+    w10_h1_stone_box = (tuple(load_subsurfaces("INGAME_BLOCKS_1", (206, 22), (723, 709), (723, 687), (309, 709), (516, 709))), MaterialType.stone, MaterialShape.box)
 
     w4_h4_wood_hollow_box =(tuple(load_subsurfaces("INGAME_BLOCKS_1", (84, 84), (761, 0) , (761, 84), (845, 0), (845, 84))), MaterialType.wood, MaterialShape.hollow_box)
 
