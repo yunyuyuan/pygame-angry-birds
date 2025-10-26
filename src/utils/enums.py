@@ -24,7 +24,14 @@ class MaterialType(Enum):
     stone = 3
     bird = 4
     pig = 5
-    
+
+MaterialCollisionScore = {
+    MaterialType.wood: 10000000,
+    MaterialType.stone: 10000000,
+    MaterialType.bird: 10000000,
+    MaterialType.pig: 10000000,
+    MaterialType.glass: 10000000
+}
 
 class MaterialShape(Enum):
     box = 1
@@ -52,7 +59,7 @@ class CollisionTypes(Enum):
 
 
 class BirdTypes(CollisionTypes):
-    red = (tuple(load_subsurfaces("INGAME_BIRDS_1", (46, 46), (903, 797))), MaterialType.bird, MaterialShape.circle)
+    red = (tuple(load_subsurfaces("INGAME_BIRDS_1", (46, 46), (903, 797), (903, 797), (903, 797), (903, 797))), MaterialType.bird, MaterialShape.circle)
     orange = 2
     blue = 3
 

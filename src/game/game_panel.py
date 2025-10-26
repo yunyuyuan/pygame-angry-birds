@@ -9,7 +9,7 @@ from src import Game
 from src.game.bg_panel import BgPanel
 from src.game.objects import GameBirdObject, GameCollisionObject, GameFixedObject, GameObject, GameObstacleObject, GamePigObject
 from src.utils import calculate_distance, calculate_intersection, get_asset_path, pygame_to_pymunk
-from src.utils.enums import BirdTypes, CollisionTypes, MaterialShape, MaterialType, ObstacleTypes, PigTypes, SpecialItems
+from src.utils.enums import BirdTypes, CollisionTypes, MaterialCollisionScore, MaterialShape, MaterialType, ObstacleTypes, PigTypes, SpecialItems
 from src.utils.surface import ContainerSurface
 
 if TYPE_CHECKING:
@@ -207,17 +207,21 @@ class GamePanel(ContainerSurface['GamePage']):
     def collision_handler(self, arbiter: pymunk.Arbiter, space: pymunk.Space, data):
         # if material == MaterialType.stone:
         for shape in [x for x in arbiter.shapes if x.collision_type == MaterialType.wood.value]:
-            if (arbiter.total_ke > 9999999):
-                self.destroy_collision_item(shape.body.id)
+            self.handle_item_collision(shape.body.id, arbiter.total_ke)
 
         for shape in [x for x in arbiter.shapes if x.collision_type == MaterialType.pig.value]:
-            if (arbiter.total_ke > 9999999):
-                self.destroy_collision_item(shape.body.id)
+            self.handle_item_collision(shape.body.id, arbiter.total_ke)
 
-    def destroy_collision_item(self, id: int):
+    def handle_item_collision(self, id: int, ke: float):
         for item in self.all_collision_items:
             if item.id == id:
-                self.del_item(item)
+                current_level = item.collision_status
+                level = math.floor(ke / MaterialCollisionScore[item.collision_type.material_type])
+                next_level = current_level + level
+                if next_level + 1 >= len(item.collision_type.surfaces):
+                    self.del_item(item)
+                else:
+                    item.collision_status = next_level
                 return
 
     '''
@@ -329,19 +333,19 @@ class GamePanel(ContainerSurface['GamePage']):
             else:
                 # 编辑-移动
                 if event.button == pygame.BUTTON_LEFT:
-                    item_moving = False
-                    for item in self.all_editing_items:
-                        if item.check_mouse_inside(pos):
-                            # 先删除
-                            self.del_item(item)
-                            print(item)
-                            if isinstance(item, GameCollisionObject):
-                                self.start_place(item.collision_type)
-                            elif isinstance(item, GameFixedObject):
-                                self.start_place(item.type)
-                            item_moving = True
-                            break
-                    if not item_moving:
+                    item_editing_moving = False
+                    if self.editing:
+                        for item in self.all_editing_items:
+                            if item.check_mouse_inside(pos):
+                                # 先删除
+                                self.del_item(item)
+                                if isinstance(item, GameCollisionObject):
+                                    self.start_place(item.collision_type)
+                                elif isinstance(item, GameFixedObject):
+                                    self.start_place(item.type)
+                                item_editing_moving = True
+                                break
+                    if not item_editing_moving:
                         if calculate_distance(self.relative_mouse, self.slingshot) <= self.MaxLaunchDistance:
                             # 拖拽弹弓
                             self.slingshot_moving = True
